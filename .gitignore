@@ -3,7 +3,8 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-
+scoi/wwwroot/Files/*.jpg
+scoi/wwwroot/Files/*.png
 
 # User-specific files
 *.rsuser
