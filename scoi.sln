@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29215.179
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "scoi", "scoi\scoi.csproj", "{A6D90E65-05E5-4762-BB6A-07E958B2485E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFT_test", "FFT_test\FFT_test.csproj", "{448C0142-7F51-4085-8CF1-672527FD4343}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A6D90E65-05E5-4762-BB6A-07E958B2485E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6D90E65-05E5-4762-BB6A-07E958B2485E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6D90E65-05E5-4762-BB6A-07E958B2485E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6D90E65-05E5-4762-BB6A-07E958B2485E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{448C0142-7F51-4085-8CF1-672527FD4343}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{448C0142-7F51-4085-8CF1-672527FD4343}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{448C0142-7F51-4085-8CF1-672527FD4343}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{448C0142-7F51-4085-8CF1-672527FD4343}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D1145212-5F57-4557-9188-75C6FAE2FA7C}
+	EndGlobalSection
+EndGlobal

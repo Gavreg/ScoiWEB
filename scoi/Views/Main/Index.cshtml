@@ -1,0 +1,151 @@
+﻿
+@{
+    ViewData["Title"] = "Index";
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>LF2</title>
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js" type="text/javascript"></script>
+
+    <style>
+
+        .container img {
+            width: 100%;
+            border-width: 1px;
+        }
+
+        .container {
+            width: 30%;
+            margin-left: 0px;
+        }
+    </style>
+
+
+
+</head>
+
+
+<body>
+
+
+    <input id="file" type="file" onchange="showpreview(this);" /> <br /><br />
+
+    <div class="container">
+        <img id="imgpreview" src="">
+    </div>
+    <br />
+
+    <textarea id="matr" cols="40" rows="5">
+0  -1  0 
+-1  4 -1 
+0  -1  0 
+</textarea> <br /><br />
+    <input id="btn" type="button" value="Загрузить" /><br />
+    <div class="result">
+        <h3 id="progress"></h3> <br />
+        <h3 id="opTime"></h3><br />
+        <img id="resultimg" src="" />
+    </div>
+
+
+
+
+    <script type="text/javascript">
+
+    var timer;
+    var bTimer = false;
+    var imagename = "";
+    var id = -1;
+
+    $(document).ready(function() {
+        $("#btn").click(SendImage);
+    });
+
+    function SendImage() {
+        clearTimeout(timer);
+        var bTimer = false;
+        id = -1;
+
+        var data = new FormData();
+        data.append("file", $("#file")[0].files[0]);
+        data.append("matr_str", $("#matr").val());
+        $.ajax({
+            url: "/Main/LoadImage",
+            type: "post",
+            //cache: false,
+            data: data,
+            success: SucsessUpload,
+            processData: false,
+            contentType: false
+        });
+    }
+
+    function SucsessUpload(data) {
+
+        //alert(data);
+        var string_arr = data.split(":");
+        id = string_arr[0];
+        imagename = string_arr[1];
+        bTimer = true;
+        timer = setTimeout(function run() {
+                onTimerProgress();
+                if (bTimer)
+                    timer = setTimeout(run, 300);
+            },
+            1000);
+    }
+
+    function onTimerProgress() {
+        console.log("send ajax, " + id);
+        $.ajax({
+            url: "/Main/getOpStatus",
+            type: "post",
+            data: "id=" + id,
+            success: progressMonitor,
+            async: false
+        });
+    }
+
+    function progressMonitor(data) {
+        $("#progress").text(data);
+        if (data == 100) {
+            clearTimeout(timer);
+            bTimer = false;
+            $.ajax({
+                url: "/Main/getOpTime",
+                type: "post",
+                data: "id=" + id,
+                success: progressTime,
+                //async: false
+            });
+            $("#resultimg").attr("src", imagename);
+        }
+    }
+
+    function progressTime(data) {
+        $("#opTime").text("Completion time " + data + "ms.");
+    }
+
+    </script>
+
+    <script type="text/javascript">
+    function showpreview(input) {
+
+        if (input.files && input.files[0]) {
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                $('#imgpreview').css('visibility', 'visible');
+                $('#imgpreview').attr('src', e.target.result);
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+    </script>
+</body>
+</html>
+

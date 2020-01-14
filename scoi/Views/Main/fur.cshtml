@@ -1,0 +1,127 @@
+﻿
+@{
+    ViewData["Title"] = "fur";
+}
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>LF2</title>
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js" type="text/javascript"></script>
+
+    <style>
+
+        .container img {
+            width: 100%;
+            border-width: 1px;
+        }
+
+        .container {
+            width: 30%;
+            margin-left: 0px;
+        }
+    </style>
+
+
+
+</head>
+<body>
+    <h1>fur</h1>
+
+    <input id="file" type="file" onchange="showpreview(this);" />
+    <div class="container">
+        <img id="imgpreview" src="">
+    </div>
+    <input id="btn" type="button" value="Загрузить" /><br />
+    <div class="result">
+        <h3 id="progress"></h3> <br />
+        <h3 id="opTime"></h3><br />
+        <img id="resultimg1" src="" />
+        <img id="resultimg2" src="" />
+    </div>
+</body>
+
+<script type="text/javascript">
+
+    var timer;
+    var bTimer = false;
+    var imagename1 = "";
+    var imagename2 = "";
+    var id = -1;
+
+    $(document).ready(function () {
+        $("#btn").click(SendImage);
+    });
+
+    function SendImage() {
+        clearTimeout(timer);
+        var bTimer = false;
+        id = -1;
+
+        var data = new FormData();
+        data.append("file", $("#file")[0].files[0]);
+        
+        $.ajax({
+            url: "/Main/LoadImageFur",
+            type: "post",
+            //cache: false,
+            data: data,
+            success: SucsessUpload,
+            processData: false,
+            contentType: false
+        });
+    }
+
+    function SucsessUpload(data) {
+
+        //alert(data);
+        var string_arr = data.split(":");
+        id = string_arr[0];
+        imagename1 = string_arr[1];
+        imagename2 = string_arr[2];
+        bTimer = true;
+        timer = setTimeout(function run() {
+                onTimerProgress();
+                if (bTimer)
+                    timer = setTimeout(run, 300);
+            },
+            1000);
+    }
+
+    function onTimerProgress() {
+        console.log("send ajax, " + id);
+        $.ajax({
+            url: "/Main/getOpStatus",
+            type: "post",
+            data: "id=" + id,
+            success: progressMonitor,
+            async: false
+        });
+    }
+
+    function progressMonitor(data) {
+        $("#progress").text(data);
+        if (data == 100) {
+            clearTimeout(timer);
+            bTimer = false;
+            $.ajax({
+                url: "/Main/getOpTime",
+                type: "post",
+                data: "id=" + id,
+                success: progressTime,
+                //async: false
+            });
+            $("#resultimg1").attr("src", imagename1);
+            $("#resultimg2").attr("src", imagename2);
+        }
+    }
+
+    function progressTime(data) {
+        $("#opTime").text("Completion time " + data + "ms.");
+    }
+
+</script>
+
+
+</html>
