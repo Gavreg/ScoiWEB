@@ -33,6 +33,9 @@
     <div class="container">
         <img id="imgpreview" src="">
     </div>
+    <textarea id="filter" cols="40" rows="5">0.5;0.5;0;0.1</textarea> 
+    <input id="onCodition" type="text" size="40"/>
+    <input id="noCodition" type="text" size="40"/>
     <input id="btn" type="button" value="Загрузить" /><br />
     <div class="result">
         <h3 id="progress"></h3> <br />
@@ -61,7 +64,9 @@
 
         var data = new FormData();
         data.append("file", $("#file")[0].files[0]);
-        
+        data.append("filter", $("#filter").val());
+        data.append("inFilter", $("#onCodition").val());
+        data.append("outFilter", $("#noCodition").val());
         $.ajax({
             url: "/Main/LoadImageFur",
             type: "post",

@@ -83,7 +83,7 @@ namespace scoi.Controllers
             jt.action = () =>
             {
 
-                var (img1, img2) = ImageOperations.Furier(jt,img);
+                var (img1, img2) = ImageOperations.Furier(jt,img,data.filter,data.inFilter,data.outFilter);
                 img1.Save(_hostingEnvironment.WebRootPath + outputName);
 
                 jt.progress = 100;

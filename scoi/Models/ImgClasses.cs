@@ -11,6 +11,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Routing.Template;
+using System.Globalization;
 //using Microsoft.EntityFrameworkCore.InMemory.Storage.Internal;
 
 
@@ -127,7 +128,7 @@ namespace scoi.Models
             return new_bitmap;
         }
 
-        public static (Bitmap, Bitmap) Furier(JobTask job,Bitmap input)
+        public static (Bitmap, Bitmap) Furier(JobTask job,Bitmap input, string filter, double in_filter_zone=1.0, double out_filter_zone=0.0 )
         {
             int width = input.Width;
             int height = input.Height;
@@ -142,8 +143,17 @@ namespace scoi.Models
             Marshal.Copy(_tmp_data.Scan0, old_bytes, 0, old_bytes.Length);
             _tmp.UnlockBits(_tmp_data);
 
+            var ss = StringSplitOptions.RemoveEmptyEntries;
+            var filter_params_strings = filter.Split("\n", ss);
+            filter_params_strings = (from s in filter_params_strings where (s.Trim() != string.Empty) select s).ToArray();
+            var cult = new CultureInfo("en-US");
+            
+            var filter_params_double = filter_params_strings.Select(a=> a.Split(";", ss)
+                .Select(b=>Convert.ToDouble(b.Trim(),cult)).ToArray() ).ToArray();
+
             job.progress = 0;
             Complex[] complex_bytes = new Complex[width*height];
+            
             for (int color = 0; color <= 2; color++)
             {
                 for (int i = 0; i < width * height; ++i)
@@ -159,9 +169,13 @@ namespace scoi.Models
                 {
                     int y = i / width;
                     int x = i - y * width;
-                    if ((x-width/2) * (x - width / 2) + (y-height/2) * (y - height / 2) < 1000)
-                        return 0;
-                    return a;
+                    foreach (var v in filter_params_double)
+                    {
+                        if ((x - v[0] * width) * (x - v[0] * width) + (y - v[1] * height) * (y - v[1] * height) > v[2] * v[2] * height * height &&
+                            (x - v[0] * width) * (x - v[0] * width) + (y - v[1] * height) * (y - v[1] * height) <= v[3] * v[3] * height * height)
+                            return a*in_filter_zone;
+                    }
+                    return a * out_filter_zone;
                 }).ToArray();
 
                 complex_bytes = FFT.ditifft2d(complex_bytes, width, height);

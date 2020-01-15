@@ -183,7 +183,7 @@ namespace scoi.Models
 
         public static Fraction operator -(Fraction f1, Fraction f2)
         {
-            return f1+(-f2);
+            return -f2+f1;
         }
 
         public static Fraction operator *(Fraction f1, Fraction f2)

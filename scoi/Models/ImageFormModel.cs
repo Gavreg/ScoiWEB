@@ -16,5 +16,9 @@ namespace scoi.Models
     public class FurierModel
     {
         public IFormFile file { set; get; }
+        public string filter { set; get; }
+
+        public double inFilter { set; get; }
+        public double outFilter { set; get; }
     }
 }

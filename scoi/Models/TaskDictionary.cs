@@ -19,7 +19,7 @@ namespace scoi.Models
             {
                 while (true)
                 {
-                    Thread.Sleep(1000);
+                    Thread.Sleep(30000);
                     var curDate = DateTime.Now;
 
                     var keysToRemove = (from v in tasks where v.Value.contextTask.IsCompleted && (curDate - v.Value.endTime).TotalMinutes >= 10 select v.Key).ToList();
