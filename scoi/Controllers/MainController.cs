@@ -76,27 +76,40 @@ namespace scoi.Controllers
                 img = new Bitmap(stream);
             }
 
-            var newFn = Path.GetRandomFileName() + Path.GetRandomFileName();
-            var outputName = "\\Files\\" + newFn + ".jpg"; //+extension;
-            jt.result_file = outputName;
+            var outputName1 = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
+            var outputName2 = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
+
+            //jt.result_file = outputName;
 
             jt.action = () =>
             {
-
-                var (img1, img2) = ImageOperations.Furier(jt,img,data.filter,data.inFilter,data.outFilter);
-                img1.Save(_hostingEnvironment.WebRootPath + outputName);
-
+                Bitmap img1=null, img2=null;
+                try
+                {
+                    (img1, img2) = ImageOperations.Furier(jt, img, data.filter, data.inFilter, data.outFilter);
+                    img1.Save(_hostingEnvironment.WebRootPath + outputName1);
+                    img2.Save(_hostingEnvironment.WebRootPath + outputName2);
+                }
+                finally
+                {
+                    img1?.Dispose();
+                    img2?.Dispose();
+                    img.Dispose();
+                }
+                
                 jt.progress = 100;
             };
 
             id = dictionary.setTask(jt);
-            return id.ToString() + ':' + outputName;
+            return id.ToString() + ':' + outputName1 + ':' + outputName2;
         }
 
         [HttpPost]
         public int getOpStatus(uint id)
         {
-            return dictionary.tasks[id].progress;
+            if (dictionary.tasks.ContainsKey(id))
+                return dictionary.tasks[id].progress;
+            return -1;
         }
 
         [HttpPost]
@@ -106,6 +119,17 @@ namespace scoi.Controllers
             jt.contextTask.Wait();
             var ts = jt.endTime - jt.startTime;
             return ts.TotalMilliseconds;
+        }
+
+        public string getTasks()
+        {
+            string ret = string.Empty;
+            foreach (var jt  in dictionary.tasks)
+            {
+                ret += jt.Key + " " + jt.Value.startTime + jt.Value.endTime + jt.Value.progress + "\r\n";
+            }
+
+            return ret;
         }
 
     }
