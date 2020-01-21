@@ -179,8 +179,15 @@ namespace scoi.Models
                 job.progress += 16;
 
 
-                var max_ma = complex_bytes.Max(x => Math.Log10(x.Magnitude+1.0));
-                var max_im = complex_bytes.Max(x => Math.Log10(x.Imaginary+1.0));
+                var max_ma = complex_bytes.Max(x => Math.Log(x.Magnitude+1.0,100));
+                //var max_im = complex_bytes.Max(x => Math.Log10(x.Imaginary+1.0));
+
+               /* var max_ma = Math.Log10(complex_bytes[1].Real + 1.0);
+                for (int i = 2; i < width * height; ++i)
+                {
+                    if (max_ma <  Math.Log10(complex_bytes[i].Real + 1.0))
+                        max_ma = Math.Log10(complex_bytes[i].Real + 1.0);
+                }*/
 
                 for (int i = 0; i < width * height; ++i)
                 {
@@ -209,13 +216,14 @@ namespace scoi.Models
                     int y = i / width;
                     int x = i - y * width;
                     new_bytes[i * 3 + color] = clmp(Math.Round( (Math.Pow(-1,x+y) * complex_bytes_result[i]).Real));
-                    furier_ma_bytes[i * 3 + color] = clmp(Math.Log10(complex_bytes[i].Magnitude + 1.0) * 255.0 / max_ma);
+                    furier_ma_bytes[i * 3 + color] = clmp(Math.Log(complex_bytes[i].Magnitude + 1.0, 100) * 255.0 / max_ma);
                     
                 }
                 job.progress += 16;
             }
 
-            using StreamWriter sw = new StreamWriter("fur.csv");
+            //Вывод коэф. преобразования в *.csv
+            /*using StreamWriter sw = new StreamWriter("fur.csv");
             for (int i = 0; i < height; ++i)
             {
                 for (int j = 0; j < width; ++j)
@@ -226,7 +234,7 @@ namespace scoi.Models
                 sw.Write("\n");
             }
             sw.Close();
-           
+           */
 
             Bitmap new_bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
             var new_bitmap_data = new_bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, new_bitmap.PixelFormat);

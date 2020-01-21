@@ -18,7 +18,7 @@
         }
 
         .container {
-            width: 30%;
+            width: 150px;
             margin-left: 0px;
         }
     </style>
@@ -27,22 +27,32 @@
 
 </head>
 <body>
-    <h1>fur</h1>
+<h1>fur</h1>
 
-    <input id="file" type="file" onchange="showpreview(this);" />
-    <div class="container">
-        <img id="imgpreview" src="">
-    </div>
-    <textarea id="filter" cols="40" rows="5">0.5;0.5;0;0.1</textarea> 
-    <input id="onCodition" type="text" size="40"/>
-    <input id="noCodition" type="text" size="40"/>
+<input id="file" type="file" onchange="showpreview(this);" />
+<div class="container">
+    <img id="imgpreview" src="">
+</div>
+<div>
+    <label id="img_w">1</label> <br/>
+    <label id="img_h">2</label>
+</div>
+<div>
+    <label>Области фильтра</label> <br />
+    <textarea id="filter" cols="40" rows="5">0.5;0.5;0;0.1</textarea><br />
+    <label>Множетели</label><br />
+    <label>Удв.  условие фильтра</label><input id="onCodition" type="text" size="40" value="1"></input><br />
+    <label>Не удв.  условие фильтра</label><input id="noCodition" type="text" size="40" value="0"><br />
     <input id="btn" type="button" value="Загрузить" /><br />
-    <div class="result">
-        <h3 id="progress"></h3> <br />
-        <h3 id="opTime"></h3><br />
-        <img id="resultimg1" src="" />
-        <img id="resultimg2" src="" />
-    </div>
+</div>
+<div class="result">
+    <h3 id="progress"></h3> <br />
+    <h3 id="opTime"></h3><br />
+    <img id="resultimg1" src="" />
+    <img id="resultimg2" src="" />
+
+</div>
+
 </body>
 
 <script type="text/javascript">
@@ -87,10 +97,10 @@
         imagename2 = string_arr[2];
         bTimer = true;
         timer = setTimeout(function run() {
-                onTimerProgress();
-                if (bTimer)
-                    timer = setTimeout(run, 300);
-            },
+            onTimerProgress();
+            if (bTimer)
+                timer = setTimeout(run, 300);
+        },
             1000);
     }
 
@@ -126,6 +136,31 @@
         $("#opTime").text("Completion time " + data + "ms.");
     }
 
+</script>
+
+<script type="text/javascript">
+
+
+
+    function showpreview(input) {
+
+        if (input.files && input.files[0]) {
+
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                $('#imgpreview').css('visibility', 'visible');
+                $('#imgpreview').attr('src', e.target.result);
+                let img = new Image();
+                img.onload = () => {
+                    
+                    $('#img_h').innerHTML = img.height;
+                    $('#img_w').innerHTML = img.width;
+                }
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
 </script>
 
 
