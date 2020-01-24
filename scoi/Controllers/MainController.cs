@@ -19,14 +19,19 @@ namespace scoi.Controllers
             _hostingEnvironment = hostingEnvironment;
         }
 
-        public ViewResult Index()
+        public ViewResult Matrix()
         {
             return View();
         }
 
         public ViewResult Fur()
         {
-            return View("fur");
+            return View();
+        }
+
+        public ViewResult Index()
+        {
+            return View();
         }
 
         [HttpPost]
@@ -51,9 +56,10 @@ namespace scoi.Controllers
             jt.action = () =>
             {
                
-                var newimg = ImageOperations.MatrixFilter(jt, img, data.matr_str);
+                using var newimg = ImageOperations.MatrixFilter(jt, img, data.matr_str);
                 newimg.Save(_hostingEnvironment.WebRootPath + outputName);
 
+                img.Dispose();
                 jt.progress = 100;
             };
             

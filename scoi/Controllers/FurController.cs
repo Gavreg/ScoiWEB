@@ -19,7 +19,7 @@ namespace scoi.Controllers
             return "";
         }
 
-        public ViewResult Index()
+        public ViewResult Matrix()
         {
             ViewBag.hash = this.GetHashCode();
             return View();

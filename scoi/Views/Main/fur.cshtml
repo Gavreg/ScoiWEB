@@ -7,20 +7,11 @@
 <html>
 <head>
     <meta name="viewport" content="width=device-width" />
+    <link rel="stylesheet" href="/Files/css/slyles.css">
     <title>LF2</title>
     <script src="http://code.jquery.com/jquery-1.10.2.min.js" type="text/javascript"></script>
 
     <style>
-
-        .container img {
-            width: 100%;
-            border-width: 1px;
-        }
-
-        .container {
-            width: 150px;
-            margin-left: 0px;
-        }
     </style>
 
 
@@ -39,11 +30,11 @@
 </div>
 <div>
     <label>Области фильтра</label> <br />
-    <textarea id="filter" cols="40" rows="5">0.5;0.5;0;0.1</textarea><br />
+    <textarea id="filter" cols="40" rows="5">512;512;0;20</textarea><br />
     <label>Множетели</label><br />
     <label>Удв.  условие фильтра</label><input id="onCodition" type="text" size="40" value="1"></input><br />
     <label>Не удв.  условие фильтра</label><input id="noCodition" type="text" size="40" value="0"><br />
-    <input id="btn" type="button" value="Загрузить" /><br />
+    <input id="btn_send" type="button" value="Загрузить" /><br />
 </div>
 <div class="result">
     <h3 id="progress"></h3> <br />
@@ -55,113 +46,43 @@
 
 </body>
 
+
+<script type="text/javascript" src="/Files/js/comon.js"> </script>
+
 <script type="text/javascript">
 
-    var timer;
-    var bTimer = false;
-    var imagename1 = "";
-    var imagename2 = "";
-    var id = -1;
+    let imagename1 = "";
+    let imagename2 = "";
 
-    $(document).ready(function () {
-        $("#btn").click(SendImage);
-    });
-
-    function SendImage() {
-        clearTimeout(timer);
-        var bTimer = false;
-        id = -1;
-
-        var data = new FormData();
+    operation_url = "/Main/LoadImageFur";
+    
+    send_data = () => {
+        let data = new FormData();
         data.append("file", $("#file")[0].files[0]);
         data.append("filter", $("#filter").val());
         data.append("inFilter", $("#onCodition").val());
         data.append("outFilter", $("#noCodition").val());
-        $.ajax({
-            url: "/Main/LoadImageFur",
-            type: "post",
-            //cache: false,
-            data: data,
-            success: SucsessUpload,
-            processData: false,
-            contentType: false
-        });
+        return data;
+    };
+
+    data_sended = (respond) => {
+        let string_arr = respond.split(":");
+        imagename1 = string_arr[0];
+        imagename2 = string_arr[1];
     }
 
-    function SucsessUpload(data) {
-
-        //alert(data);
-        var string_arr = data.split(":");
-        id = string_arr[0];
-        imagename1 = string_arr[1];
-        imagename2 = string_arr[2];
-        bTimer = true;
-        timer = setTimeout(function run() {
-            onTimerProgress();
-            if (bTimer)
-                timer = setTimeout(run, 300);
-        },
-            1000);
+    operation_complete = () => {
+        $("#resultimg1").attr("src", imagename1);
+        $("#resultimg2").attr("src", imagename2);
     }
 
-    function onTimerProgress() {
-        console.log("send ajax, " + id);
-        $.ajax({
-            url: "/Main/getOpStatus",
-            type: "post",
-            data: "id=" + id,
-            success: progressMonitor,
-            async: false
-        });
-    }
-
-    function progressMonitor(data) {
-        $("#progress").text(data);
-        if (data == 100) {
-            clearTimeout(timer);
-            bTimer = false;
-            $.ajax({
-                url: "/Main/getOpTime",
-                type: "post",
-                data: "id=" + id,
-                success: progressTime,
-                //async: false
-            });
-            $("#resultimg1").attr("src", imagename1);
-            $("#resultimg2").attr("src", imagename2);
-        }
-    }
-
-    function progressTime(data) {
-        $("#opTime").text("Completion time " + data + "ms.");
-    }
 
 </script>
 
-<script type="text/javascript">
 
 
 
-    function showpreview(input) {
 
-        if (input.files && input.files[0]) {
-
-            let reader = new FileReader();
-            reader.onload = function (e) {
-                $('#imgpreview').css('visibility', 'visible');
-                $('#imgpreview').attr('src', e.target.result);
-                let img = new Image();
-                img.onload = () => {
-                    
-                    $('#img_h').innerHTML = img.height;
-                    $('#img_w').innerHTML = img.width;
-                }
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-</script>
 
 
 </html>

@@ -35,7 +35,6 @@ namespace scoi.Models
 
                 if (i == 0)
                 {
-
                     mat = new double[str_list.Length, chars.Length];
                 }
 
@@ -215,8 +214,10 @@ namespace scoi.Models
                     int x = i - y * new_width;
                     foreach (var v in filter_params_double)
                     {
-                        if ((x - v[0] * new_width) * (x - v[0] * new_width) + (y - v[1] * new_height) * (y - v[1] * new_height) > v[2] * v[2] * new_height * new_height &&
-                            (x - v[0] * new_width) * (x - v[0] * new_width) + (y - v[1] * new_height) * (y - v[1] * new_height) <= v[3] * v[3] * new_height * new_height)
+                        //if ((x - v[0] * new_width) * (x - v[0] * new_width) + (y - v[1] * new_height) * (y - v[1] * new_height) > v[2] * v[2] * new_height * new_height &&
+                        //    (x - v[0] * new_width) * (x - v[0] * new_width) + (y - v[1] * new_height) * (y - v[1] * new_height) <= v[3] * v[3] * new_height * new_height)
+                        if ((x - v[0] ) * (x - v[0] ) + (y - v[1] ) * (y - v[1] ) > v[2] * v[2]   &&
+                            (x - v[0] ) * (x - v[0] ) + (y - v[1] ) * (y - v[1] ) <= v[3] * v[3])
                             return a*in_filter_zone;
                     }
                     return a * out_filter_zone;
