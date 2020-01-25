@@ -20,6 +20,26 @@ namespace scoi.Models
     
     public static class ImageOperations
     {
+
+        static byte[] getImgBytes(Bitmap img)
+        {
+            byte[] bytes = new byte[img.Width*img.Height*3];
+            var data = img.LockBits(new Rectangle(0, 0, img.Width, img.Height), ImageLockMode.ReadOnly,
+                img.PixelFormat);
+            Marshal.Copy(data.Scan0,bytes,0,bytes.Length);
+            img.UnlockBits(data);
+            return bytes;
+        }
+
+        static void writeImageBytes(Bitmap img, byte[] bytes)
+        {
+            var data = img.LockBits(new Rectangle(0, 0, img.Width, img.Height), ImageLockMode.WriteOnly,
+                img.PixelFormat);
+            Marshal.Copy(bytes,0,data.Scan0,bytes.Length);
+
+            img.UnlockBits(data);
+        }
+        
         static double[,]  getCoreFromStr(string matrix)
         {
             char[] splitter = { '\n' };
@@ -65,16 +85,20 @@ namespace scoi.Models
 
 
             Bitmap _tmp = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            _tmp.SetResolution(input.HorizontalResolution,input.VerticalResolution);
             using (Graphics g = Graphics.FromImage(_tmp))
             {
                 g.DrawImageUnscaled(input, 0, 0);
+                //g.DrawImage(input,0,0,new RectangleF(0,0,input.Width,input.Height),GraphicsUnit.Pixel);
             }
+           
 
             byte[] old_bytes = new byte[width * height * 3];
             byte[] new_bytes = new byte[width * height * 3];
 
             var _tmp_data = _tmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, _tmp.PixelFormat);
             Marshal.Copy(_tmp_data.Scan0, old_bytes, 0, old_bytes.Length);
+           
             _tmp.UnlockBits(_tmp_data);
 
             var core = getCoreFromStr(matrix);
@@ -124,7 +148,8 @@ namespace scoi.Models
             var new_bitmap_data = new_bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, new_bitmap.PixelFormat);
             Marshal.Copy(new_bytes, 0, new_bitmap_data.Scan0, new_bytes.Length);
             new_bitmap.UnlockBits(new_bitmap_data);
-
+            //writeImageBytes(new_bitmap,new_bytes);
+            
             return new_bitmap;
         }
 
@@ -144,7 +169,8 @@ namespace scoi.Models
                 new_height = (int)Math.Pow(2, Math.Ceiling(p));
 
             using Bitmap _tmp = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
-            byte[] old_bytes = new byte[new_width * new_height * 3];
+            _tmp.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+
             byte[] new_bytes = new byte[new_width * new_height * 3];
             byte[] furier_ma_bytes = new byte[new_width * new_height * 3];
             byte[] furier_im_bytes = new byte[new_width * new_height * 3];
@@ -160,9 +186,9 @@ namespace scoi.Models
 
 
 
-            var _tmp_data = _tmp.LockBits(new Rectangle(0, 0, new_width, new_height), ImageLockMode.ReadOnly, _tmp.PixelFormat);
-            Marshal.Copy(_tmp_data.Scan0, old_bytes, 0, old_bytes.Length);
-            _tmp.UnlockBits(_tmp_data);
+            byte[] old_bytes = getImgBytes(_tmp);
+
+
 
             var ss = StringSplitOptions.RemoveEmptyEntries;
             var filter_params_strings = filter.Split("\n", ss);
@@ -231,7 +257,6 @@ namespace scoi.Models
                     int x = i - y * new_width;
                     new_bytes[i * 3 + color] = clmp(Math.Round( (Math.Pow(-1,x+y) * complex_bytes_result[i]).Real));
                     furier_ma_bytes[i * 3 + color] = clmp(Math.Log(complex_bytes[i].Magnitude + 1.0, 100) * 255.0 / max_ma);
-                    
                 }
                 job.progress += 16;
             }
@@ -251,22 +276,95 @@ namespace scoi.Models
            */
 
             using Bitmap new_bitmap = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
-            var new_bitmap_data = new_bitmap.LockBits(new Rectangle(0, 0, new_width, new_height), ImageLockMode.WriteOnly, new_bitmap.PixelFormat);
-            Marshal.Copy(new_bytes, 0, new_bitmap_data.Scan0, new_bytes.Length);
-            new_bitmap.UnlockBits(new_bitmap_data);
+
+            writeImageBytes(new_bitmap,new_bytes);
 
             Bitmap new_bitmap_re = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
-            var new_bitmap_re_data = new_bitmap_re.LockBits(new Rectangle(0, 0, new_width, new_height), ImageLockMode.WriteOnly, new_bitmap.PixelFormat);
-            Marshal.Copy(furier_ma_bytes, 0, new_bitmap_re_data.Scan0, furier_ma_bytes.Length);
-            new_bitmap_re.UnlockBits(new_bitmap_re_data);
+            writeImageBytes(new_bitmap_re, furier_ma_bytes);
+
 
             Bitmap new_bitamp_ret = new Bitmap(width,height, PixelFormat.Format24bppRgb);
+            new_bitamp_ret.SetResolution(new_bitmap.HorizontalResolution, new_bitmap.VerticalResolution);
             using (Graphics g1 = Graphics.FromImage(new_bitamp_ret))
             {
                 g1.DrawImageUnscaled(new_bitmap,0,0);
             }
             
             return (new_bitamp_ret, new_bitmap_re);
+
+        }
+
+
+        //https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D1%82%D0%BE%D0%B4_%D0%9E%D1%86%D1%83
+        public static Bitmap Binaryzation(Bitmap input)
+        {
+            int width = input.Width;
+            int height = input.Height;
+            using Bitmap _tmp = new Bitmap(width,height,PixelFormat.Format24bppRgb);
+            _tmp.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            using var g = Graphics.FromImage(_tmp);
+            g.DrawImageUnscaled(input,0,0);
+
+            byte[] input_bytes = getImgBytes(_tmp);
+            byte[] out_bytes = new byte[input_bytes.Length];
+            
+            for (int color = 0; color <= 2; ++color)
+            {
+                double[] N = new double[256];
+                double [] sum_N = new double[256]; 
+                double [] sum_u = new double[256];
+                var Nt = 0.0;
+                var max = 0;
+                for (int i = 0; i < width * height; ++i)
+                {
+                    N[input_bytes[i * 3+color]] += 1.0 / width / height;
+                    Nt += 1.0 / width / height;
+                    if (input_bytes[i * 3 + color] > max)
+                        max = input_bytes[i * 3 + color];
+                }
+
+                var sum = 0.0;
+                var _sum_u=0.0;
+                
+                for (int i = 0; i <= max; ++i)
+                {
+                    sum += N[i];
+                    _sum_u += i * N[i];
+                    sum_N[i] = sum;
+                    sum_u[i] = _sum_u;
+                }
+
+                double w1 = 0.0, w2 = 0.0, u1 = 0.0, u2 = 0.0;
+
+                int final_t = 0;
+                double sig_max = 0.0;
+                for (int t = 1; t <= max; ++t)
+                {
+                    w1 = sum_N[t - 1];
+                    w2 = 1.0 - w1;
+                    u1 = sum_u[t - 1] / w1;
+                    u2 = (sum_u[max] - u1 * w1) / w2;
+                    var sig = w1 * w2 * (u1 - u2) * (u1 - u2);
+                    if (sig > sig_max)
+                    {
+                        sig_max = sig;
+                        final_t = t;
+                    }
+                }
+                for (int i = 0; i < width * height; ++i)
+                {
+
+                    if (input_bytes[i * 3 + color] > final_t)
+                        out_bytes[i * 3 + color] = 255;
+                    else
+                        out_bytes[i * 3 + color] = 0;
+                }
+
+            }
+
+            Bitmap img_ret = new Bitmap(width,height,PixelFormat.Format24bppRgb);
+            writeImageBytes(img_ret,out_bytes);
+            return img_ret;
 
         }
     }

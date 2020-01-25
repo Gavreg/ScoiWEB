@@ -13,6 +13,12 @@ namespace scoi.Models
         public string matr_str { set; get; }
     }
 
+    public class BinaryModel
+    {
+        public IFormFile file { set; get; }
+        public string param { set; get; }
+    }
+
     public class FurierModel
     {
         public IFormFile file { set; get; }
