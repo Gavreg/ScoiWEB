@@ -10,7 +10,7 @@
     <img id="imgpreview" src="">
 </div>
 <div>
-    <label id="img_w">1</label> <br/>
+    <label id="img_w">1</label> <br />
     <label id="img_h">2</label>
 </div>
 <div>
@@ -30,39 +30,44 @@
 </div>
 
 
+@section scripts
+{
+
+    <script type="text/javascript" src="/Files/js/comon.js"></script>
+
+    <script type="text/javascript">
+
+        let imagename1 = "";
+        let imagename2 = "";
+
+        operation_url = "/Main/LoadImageFur";
+
+        send_data = () => {
+            let data = new FormData();
+            data.append("file", $("#file")[0].files[0]);
+            data.append("filter", $("#filter").val());
+            data.append("inFilter", $("#onCodition").val());
+            data.append("outFilter", $("#noCodition").val());
+            return data;
+        };
+
+        data_sended = (respond) => {
+            let string_arr = respond.split(":");
+            imagename1 = string_arr[0];
+            imagename2 = string_arr[1];
+        }
+
+        operation_complete = () => {
+            $("#resultimg1").attr("src", imagename1);
+            $("#resultimg2").attr("src", imagename2);
+        }
 
 
-<script type="text/javascript" src="/Files/js/comon.js"> </script>
-
-<script type="text/javascript">
-
-    let imagename1 = "";
-    let imagename2 = "";
-
-    operation_url = "/Main/LoadImageFur";
-    
-    send_data = () => {
-        let data = new FormData();
-        data.append("file", $("#file")[0].files[0]);
-        data.append("filter", $("#filter").val());
-        data.append("inFilter", $("#onCodition").val());
-        data.append("outFilter", $("#noCodition").val());
-        return data;
-    };
-
-    data_sended = (respond) => {
-        let string_arr = respond.split(":");
-        imagename1 = string_arr[0];
-        imagename2 = string_arr[1];
-    }
-
-    operation_complete = () => {
-        $("#resultimg1").attr("src", imagename1);
-        $("#resultimg2").attr("src", imagename2);
-    }
+    </script>
 
 
-</script>
+
+}
 
 
 

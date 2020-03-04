@@ -1,4 +1,13 @@
 ﻿
+.layout_body {
+    margin: 0;
+}
+
+.maindiv {
+    margin: 8px;
+    margin-bottom: 100px;
+}
+
 .container img {
     width: 100%;
     border-width: 1px;
@@ -20,6 +29,6 @@
 
 .footer div {
     width: 100px;
-    border: 1px solid red;
+    /*border: 1px solid red;*/
     margin: auto;
 }

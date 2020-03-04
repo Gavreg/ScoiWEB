@@ -78,13 +78,9 @@ namespace scoi.Models
             }
            
 
-            byte[] old_bytes = new byte[width * height * 3];
+            byte[] old_bytes = getImgBytes(_tmp);
             byte[] new_bytes = new byte[width * height * 3];
-
-            var _tmp_data = _tmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, _tmp.PixelFormat);
-            Marshal.Copy(_tmp_data.Scan0, old_bytes, 0, old_bytes.Length);
-           
-            _tmp.UnlockBits(_tmp_data);
+        
 
             var core = getCoreFromStr(matrix);
             int M = core.GetLength(0);
@@ -127,14 +123,11 @@ namespace scoi.Models
                     new_bytes[width * _i * 3 + _j * 3 + 1] = clmp(sum2);
                     new_bytes[width * _i * 3 + _j * 3 + 2] = clmp(sum3);
                 }
-                job.progress = (int)Math.Floor(1.0 * _i / width * 100);
+                job.progress = (int)Math.Floor(1.0 * _i / height * 100);
             }
             Bitmap new_bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
-            var new_bitmap_data = new_bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, new_bitmap.PixelFormat);
-            Marshal.Copy(new_bytes, 0, new_bitmap_data.Scan0, new_bytes.Length);
-            new_bitmap.UnlockBits(new_bitmap_data);
-            //writeImageBytes(new_bitmap,new_bytes);
-            
+            writeImageBytes(new_bitmap,new_bytes);
+     
             return new_bitmap;
         }
 

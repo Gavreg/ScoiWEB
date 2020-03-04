@@ -2,25 +2,29 @@
     ViewData["Title"] = "Binary";
 }
 
-<input id="file" type="file" onchange="showpreview(this);" /> <br /><br />
+<input id="file" type="file" onchange="showpreview(this);" />
+<br />
+<br />
 
 <div class="container">
     <img id="imgpreview" src="">
 </div>
 <br />
 
- <br /><br />
-<input id="btn_send" type="button" value="Загрузить" /><br />
+<br />
+<br />
+<input id="btn_send" type="button" value="Загрузить" />
+<br />
 <div class="result">
     <h3 id="progress"></h3> <br />
     <h3 id="opTime"></h3><br />
     <div class="result_img">
-        
+
         <div>
             <h3>Критерий Гаврилова</h3> <br />
             <img id="resultimg1" src="" />
         </div>
-        
+
         <div>
             <h3>Критерий Отсу</h3> <br />
             <img id="resultimg" src="" />
@@ -28,36 +32,39 @@
     </div>
 </div>
 
+@section scripts
+{
+    <script type="text/javascript" src="/Files/js/comon.js"></script>
 
-<script type="text/javascript" src="/Files/js/comon.js"></script>
-
-<script type="text/javascript">
-
-
-    var imagename = "";
-    var imagename1 = "";
-
-    operation_url = "/Main/LoadImageBinary";
-
-    send_data = () => {
-        let data = new FormData();
-        data.append("file", $("#file")[0].files[0]);
-        //data.append("matr_str", $("#matr").val());
-        return data;
-    };
-
-    data_sended = (respond) => {
-
-        let files = respond.split(":");
-        imagename = files[0];
-        imagename1 = files[1];
-    }
-
-    operation_complete = () => {
-        $("#resultimg").attr("src", imagename);
-        $("#resultimg1").attr("src", imagename1);
-    }
+    <script type="text/javascript">
 
 
+        var imagename = "";
+        var imagename1 = "";
 
-</script>
+        operation_url = "/Main/LoadImageBinary";
+
+        send_data = () => {
+            let data = new FormData();
+            data.append("file", $("#file")[0].files[0]);
+            //data.append("matr_str", $("#matr").val());
+            return data;
+        };
+
+        data_sended = (respond) => {
+
+            let files = respond.split(":");
+            imagename = files[0];
+            imagename1 = files[1];
+        }
+
+        operation_complete = () => {
+            $("#resultimg").attr("src", imagename);
+            $("#resultimg1").attr("src", imagename1);
+        }
+
+
+
+    </script>
+}
+
