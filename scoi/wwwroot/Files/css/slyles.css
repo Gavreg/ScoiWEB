@@ -8,3 +8,18 @@
     width: 150px;
     margin-left: 0px;
 }
+
+.footer {
+    position: fixed;
+    background: white;
+    height: 50px;
+    border-top: 1px solid grey;
+    bottom: 0;
+    width: 100%;
+}
+
+.footer div {
+    width: 100px;
+    border: 1px solid red;
+    margin: auto;
+}

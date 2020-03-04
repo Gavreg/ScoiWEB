@@ -12,6 +12,8 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Routing.Template;
 using System.Globalization;
+using Microsoft.AspNetCore.Components.Forms;
+
 //using Microsoft.EntityFrameworkCore.InMemory.Storage.Internal;
 
 
@@ -21,24 +23,7 @@ namespace scoi.Models
     public static class ImageOperations
     {
 
-        static byte[] getImgBytes(Bitmap img)
-        {
-            byte[] bytes = new byte[img.Width*img.Height*3];
-            var data = img.LockBits(new Rectangle(0, 0, img.Width, img.Height), ImageLockMode.ReadOnly,
-                img.PixelFormat);
-            Marshal.Copy(data.Scan0,bytes,0,bytes.Length);
-            img.UnlockBits(data);
-            return bytes;
-        }
 
-        static void writeImageBytes(Bitmap img, byte[] bytes)
-        {
-            var data = img.LockBits(new Rectangle(0, 0, img.Width, img.Height), ImageLockMode.WriteOnly,
-                img.PixelFormat);
-            Marshal.Copy(bytes,0,data.Scan0,bytes.Length);
-
-            img.UnlockBits(data);
-        }
         
         static double[,]  getCoreFromStr(string matrix)
         {
@@ -296,7 +281,7 @@ namespace scoi.Models
 
 
         //https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D1%82%D0%BE%D0%B4_%D0%9E%D1%86%D1%83
-        public static Bitmap Binaryzation(Bitmap input)
+        public static Bitmap BinaryzationOtsu(Bitmap input)
         {
             int width = input.Width;
             int height = input.Height;
@@ -307,6 +292,12 @@ namespace scoi.Models
 
             byte[] input_bytes = getImgBytes(_tmp);
             byte[] out_bytes = new byte[input_bytes.Length];
+
+            for (int i = 0; i < input_bytes.Length; i += 3)
+            {
+                input_bytes[i]= clmp(0.333 * input_bytes[i] + 0.333 * input_bytes[i+1] + 0.333 * input_bytes[i+2]);
+                input_bytes[i + 2] = input_bytes[i + 1] = input_bytes[i];
+            }
             
             for (int color = 0; color <= 2; ++color)
             {
@@ -366,6 +357,99 @@ namespace scoi.Models
             writeImageBytes(img_ret,out_bytes);
             return img_ret;
 
+        }
+
+        public static Bitmap BinaryzationAvg(Bitmap input)
+        {
+            int width = input.Width;
+            int height = input.Height;
+            using Bitmap _tmp = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            _tmp.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            using var g = Graphics.FromImage(_tmp);
+            g.DrawImageUnscaled(input, 0, 0);
+
+            byte[] input_bytes = getImgBytes(_tmp);
+            byte[] out_bytes = new byte[input_bytes.Length];
+
+            for (int i = 0; i < input_bytes.Length; i += 3)
+            {
+                input_bytes[i] = clmp(0.333 * input_bytes[i] + 0.333 * input_bytes[i + 1] + 0.333 * input_bytes[i + 2]);
+                input_bytes[i + 2] = input_bytes[i + 1] = input_bytes[i];
+            }
+
+            var t = input_bytes.Average(x=>x);
+
+            var bytes = input_bytes.Select(x => (x<t)?(byte)0: (byte)255 ).ToArray();
+
+            Bitmap img_ret = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            img_ret.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            writeImageBytes(img_ret, bytes);
+            return img_ret;
+
+        }
+
+
+        public static Bitmap SomeFunction(Bitmap input)
+        {
+            int width = input.Width;
+            int height = input.Height;
+            //создаем временное изображние с нужным нам форматом хранения.
+            //так как обработка побайтовая, там важно расположение байтов в картинке.
+            //а оно опеределено форматом хранения
+
+            byte[] input_bytes = new byte[0]; //пустой массивчик байт
+
+            using (Bitmap _tmp = new Bitmap(width, height, PixelFormat.Format24bppRgb))
+            {
+                //устанавливаем DPI такой же как у исходного
+                _tmp.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+
+                //рисуем исходное изображение на временном.
+                using (var g = Graphics.FromImage(_tmp))
+                {
+                    g.DrawImageUnscaled(input, 0, 0);
+                }
+                input_bytes = getImgBytes(input); //получаем байты изображения, см. описание ф-ции ниже
+            }
+
+            /*
+                Вот на этом моменте у нам в массиве input_bytes лежит побайтовая копия исходной картинки.
+                в формате BGR-BGR-BGR-BGR-BGR-BGR (обратите внимание, цвета хранятся наоборот)
+                P.S. Там еще что то перевурнуто, толи строки, толи столбцы, подзабыл
+
+                Обработка картинки таким образом В РАЗЫ быстрее, чем через Bitmap
+                
+
+             */
+            
+            //Допустим, мы обработаки картинку и сложили результат сюда:
+            byte[] bytes = new byte[width*height*3];
+
+            Bitmap img_ret = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            img_ret.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            writeImageBytes(img_ret, bytes);
+            return img_ret;
+
+        }
+        static byte[] getImgBytes(Bitmap img)
+        {
+            byte[] bytes = new byte[img.Width * img.Height * 3];  //выделяем память под массив байтов
+            var data = img.LockBits(new Rectangle(0, 0, img.Width, img.Height),  //блокируем участок памати, занимаемый изображением
+                ImageLockMode.ReadOnly,
+                img.PixelFormat);
+            Marshal.Copy(data.Scan0, bytes, 0, bytes.Length);  //копируем байты изображения в массив
+            img.UnlockBits(data);   //разблокируем изображение
+            return bytes; //возвращаем байты
+        }
+
+        static void writeImageBytes(Bitmap img, byte[] bytes)
+        {
+            var data = img.LockBits(new Rectangle(0, 0, img.Width, img.Height),  //блокируем участок памати, занимаемый изображением
+                ImageLockMode.WriteOnly,
+                img.PixelFormat);
+            Marshal.Copy(bytes, 0, data.Scan0, bytes.Length); //копируем байты массива в изображение
+
+            img.UnlockBits(data);  //разблокируем изображение
         }
     }
 

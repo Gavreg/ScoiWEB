@@ -128,20 +128,23 @@ namespace scoi.Controllers
                 img = new Bitmap(stream);
             }
 
-            var newFn = Path.GetRandomFileName() + Path.GetRandomFileName();
-            var outputName = "\\Files\\" + newFn + ".jpg"; //+extension;
+            
+            var outputName = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
+            var outputName1 = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
             jt.result_file = outputName;
             jt.action = () =>
             {
-                using var new_img = ImageOperations.Binaryzation(img);
+                using var new_img = ImageOperations.BinaryzationOtsu(img);
                 new_img.Save(_hostingEnvironment.WebRootPath + outputName);
+                using var new_img2 = ImageOperations.BinaryzationAvg(img);
+                new_img2.Save(_hostingEnvironment.WebRootPath + outputName1);
                 img.Dispose();
                 jt.progress = 100;
             };
             id = dictionary.setTask(jt);
 
 
-            return id.ToString() + ':' + outputName;
+            return id.ToString() + ':' + outputName+ ':' + outputName1;
         }
 
         [HttpPost]
