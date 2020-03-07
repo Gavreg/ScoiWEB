@@ -25,9 +25,24 @@ namespace scoi.Models
             {
                 startTime = DateTime.Now;
                 System.Diagnostics.Debug.WriteLine(startTime);
-                action();
-                endTime = DateTime.Now;
-                System.Diagnostics.Debug.WriteLine(endTime);
+
+                try
+                {
+
+                    action();
+
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    progress = -1;
+                }
+                finally
+                {
+                    endTime = DateTime.Now;
+                    System.Diagnostics.Debug.WriteLine(endTime);
+                }
+
             });
         }
     }

@@ -30,6 +30,7 @@ namespace scoi.Models
         {
             return new Fraction(str);
         }
+
         public string toString()
         {
             string s = string.Empty;

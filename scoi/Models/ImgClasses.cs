@@ -112,7 +112,7 @@ namespace scoi.Models
                                 j *= -1;
 
                             if (j >= width)
-                                j = 2 * height - j - 1;
+                                j = 2 * width - j - 1;
 
                             sum1 += old_bytes[width * i * 3 + j * 3 + 0] * core[ii, jj];
                             sum2 += old_bytes[width * i * 3 + j * 3 + 1] * core[ii, jj];
@@ -124,6 +124,7 @@ namespace scoi.Models
                     new_bytes[width * _i * 3 + _j * 3 + 2] = clmp(sum3);
                 }
                 job.progress = (int)Math.Floor(1.0 * _i / height * 100);
+                
             }
             Bitmap new_bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
             writeImageBytes(new_bitmap,new_bytes);
@@ -253,7 +254,7 @@ namespace scoi.Models
             sw.Close();
            */
 
-            using Bitmap new_bitmap = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
+            Bitmap new_bitmap = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
 
             writeImageBytes(new_bitmap,new_bytes);
 
@@ -261,14 +262,14 @@ namespace scoi.Models
             writeImageBytes(new_bitmap_re, furier_ma_bytes);
 
 
-            Bitmap new_bitamp_ret = new Bitmap(width,height, PixelFormat.Format24bppRgb);
-            new_bitamp_ret.SetResolution(new_bitmap.HorizontalResolution, new_bitmap.VerticalResolution);
-            using (Graphics g1 = Graphics.FromImage(new_bitamp_ret))
-            {
-                g1.DrawImageUnscaled(new_bitmap,0,0);
-            }
+            //Bitmap new_bitamp_ret = new Bitmap(width,height, PixelFormat.Format24bppRgb);
+            //new_bitamp_ret.SetResolution(new_bitmap.HorizontalResolution, new_bitmap.VerticalResolution);
+            //using (Graphics g1 = Graphics.FromImage(new_bitamp_ret))
+            //{
+            //    g1.DrawImageUnscaled(new_bitmap,0,0);
+            //}
             
-            return (new_bitamp_ret, new_bitmap_re);
+            return (new_bitmap, new_bitmap_re);
 
         }
 
@@ -285,71 +286,170 @@ namespace scoi.Models
 
             byte[] input_bytes = getImgBytes(_tmp);
             byte[] out_bytes = new byte[input_bytes.Length];
+            
 
+            //записываем в красный канал среднее по каналам пикселя.
+            //работаем только с ним
             for (int i = 0; i < input_bytes.Length; i += 3)
             {
                 input_bytes[i]= clmp(0.333 * input_bytes[i] + 0.333 * input_bytes[i+1] + 0.333 * input_bytes[i+2]);
-                input_bytes[i + 2] = input_bytes[i + 1] = input_bytes[i];
+                //input_bytes[i + 2] = input_bytes[i + 1] = input_bytes[i];
             }
             
-            for (int color = 0; color <= 2; ++color)
+
+            
+            double[] N = new double[256];
+            double [] sum_N = new double[256]; 
+            double [] sum_u = new double[256];
+            var Nt = 0.0;
+            var max = 0;
+            for (int i = 0; i < width * height; ++i)
             {
-                double[] N = new double[256];
-                double [] sum_N = new double[256]; 
-                double [] sum_u = new double[256];
-                var Nt = 0.0;
-                var max = 0;
-                for (int i = 0; i < width * height; ++i)
-                {
-                    N[input_bytes[i * 3+color]] += 1.0 / width / height;
-                    Nt += 1.0 / width / height;
-                    if (input_bytes[i * 3 + color] > max)
-                        max = input_bytes[i * 3 + color];
-                }
-
-                var sum = 0.0;
-                var _sum_u=0.0;
-                
-                for (int i = 0; i <= max; ++i)
-                {
-                    sum += N[i];
-                    _sum_u += i * N[i];
-                    sum_N[i] = sum;
-                    sum_u[i] = _sum_u;
-                }
-
-                double w1 = 0.0, w2 = 0.0, u1 = 0.0, u2 = 0.0;
-
-                int final_t = 0;
-                double sig_max = 0.0;
-                for (int t = 1; t <= max; ++t)
-                {
-                    w1 = sum_N[t - 1];
-                    w2 = 1.0 - w1;
-                    u1 = sum_u[t - 1] / w1;
-                    u2 = (sum_u[max] - u1 * w1) / w2;
-                    var sig = w1 * w2 * (u1 - u2) * (u1 - u2);
-                    if (sig > sig_max)
-                    {
-                        sig_max = sig;
-                        final_t = t;
-                    }
-                }
-                for (int i = 0; i < width * height; ++i)
-                {
-
-                    if (input_bytes[i * 3 + color] > final_t)
-                        out_bytes[i * 3 + color] = 255;
-                    else
-                        out_bytes[i * 3 + color] = 0;
-                }
-
+                N[input_bytes[i * 3]] += 1.0 / width / height;
+                Nt += 1.0 / width / height;
+                if (input_bytes[i * 3] > max)
+                    max = input_bytes[i * 3];
             }
+
+            var sum = 0.0;
+            var _sum_u=0.0;
+                
+            for (int i = 0; i <= max; ++i)
+            {
+                sum += N[i];
+                _sum_u += i * N[i];
+                sum_N[i] = sum;
+                sum_u[i] = _sum_u;
+            }
+
+            double w1 = 0.0, w2 = 0.0, u1 = 0.0, u2 = 0.0;
+
+            int final_t = 0;
+            double sig_max = 0.0;
+            for (int t = 1; t <= max; ++t)
+            {
+                w1 = sum_N[t - 1];
+                w2 = 1.0 - w1;
+                u1 = sum_u[t - 1] / w1;
+                u2 = (sum_u[max] - u1 * w1) / w2;
+                var sig = w1 * w2 * (u1 - u2) * (u1 - u2);
+                if (sig > sig_max)
+                {
+                    sig_max = sig;
+                    final_t = t;
+                }
+            }
+            for (int i = 0; i < width * height; ++i)
+            {
+
+                if (input_bytes[i * 3] > final_t)
+                {
+                    out_bytes[i * 3 + 0] = 255;
+                    out_bytes[i * 3 + 1] = 255;
+                    out_bytes[i * 3 + 2] = 255;
+                }
+                        
+                else
+                {
+                    out_bytes[i * 3 + 0] = 0;
+                    out_bytes[i * 3 + 1] = 0;
+                    out_bytes[i * 3 + 2] = 0;
+                }
+                        
+            }
+
+            
 
             Bitmap img_ret = new Bitmap(width,height,PixelFormat.Format24bppRgb);
             writeImageBytes(img_ret,out_bytes);
             return img_ret;
 
+        }
+
+        public static Bitmap BinarizationNiblack(Bitmap input, int a = 21, double sens = -0.2)
+        {
+
+
+            int width = input.Width;
+            int height = input.Height;
+            using Bitmap _tmp = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            _tmp.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            using var g = Graphics.FromImage(_tmp);
+            g.DrawImageUnscaled(input, 0, 0);
+
+            byte[] input_bytes = getImgBytes(_tmp);
+
+
+
+            //чб изображние кладем в красный канал
+            
+            for (int i = 0; i < input_bytes.Length; i+=3)
+            {
+                input_bytes[i] = (byte)(0.333 * input_bytes[i  + 0] + 0.333 * input_bytes[i  + 1] +
+                                       0.333 * input_bytes[i  + 2]);
+            }
+
+            
+            for (int _i = 0; _i < height; ++_i)
+            {
+                for (int _j = 0; _j < width; ++_j)
+                {
+
+                    int index = _i * width * 3 + _j*3;
+                    int sum = 0;
+                    int sqr_sum = 0;
+                    
+                    for (int ii = 0; ii < a; ++ii)   // h - (i - h)     h - i + h = 2h-i
+                    {
+                        int i = _i + ii - a / 2;
+                        if (i < 0)
+                            i *= -1;
+                        if (i >= height)
+                            i = 2 * height - i - 1;
+
+                        for (int jj = 0; jj < a; ++jj)
+                        {
+                            int j = _j + jj - a / 2;
+
+                            if (j < 0)
+                                j *= -1;
+
+                            if (j >= width)
+                                j = 2 * width - j - 1;
+
+                            int inner_index = i * width * 3 + j * 3;
+
+                            sum += input_bytes[inner_index];
+                            sqr_sum += input_bytes[inner_index] * input_bytes[inner_index];
+                            
+                        }
+                    }
+
+                    sqr_sum /= a*a;
+                    sum /= a*a;
+
+                    double D = Math.Sqrt( sqr_sum - sum*sum );
+                    double t = sum + sens*D;
+
+                    //output1Byte[index] = (byte)D;
+
+                    //результат обработки кладем в синий канал
+                    input_bytes[index+1] = (input_bytes[index+1] <= t) ? (byte)0 : (byte)255;
+
+                }
+            }
+            
+            
+            for (int i = 0; i < input_bytes.Length; i+=3)
+            {
+                input_bytes[i + 0] = input_bytes[i  + 1];
+                input_bytes[i + 2] = input_bytes[i  + 1];
+            }
+
+
+            Bitmap img_ret = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            writeImageBytes(img_ret, input_bytes);
+            return img_ret;
         }
 
         public static Bitmap BinaryzationAvg(Bitmap input)
@@ -427,6 +527,7 @@ namespace scoi.Models
         static byte[] getImgBytes(Bitmap img)
         {
             byte[] bytes = new byte[img.Width * img.Height * 3];  //выделяем память под массив байтов
+            
             var data = img.LockBits(new Rectangle(0, 0, img.Width, img.Height),  //блокируем участок памати, занимаемый изображением
                 ImageLockMode.ReadOnly,
                 img.PixelFormat);

@@ -16,7 +16,8 @@ namespace scoi.Models
     public class BinaryModel
     {
         public IFormFile file { set; get; }
-        public string param { set; get; }
+        public int wndSize { set; get; }
+        public float sens { set; get; }
     }
 
     public class FurierModel
