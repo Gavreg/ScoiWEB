@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
@@ -115,6 +116,8 @@ namespace scoi.Controllers
             return id.ToString() + ':' + outputName1 + ':' + outputName2;
         }
 
+
+
         public async Task<string> LoadImageBinary(BinaryModel data)
         {
             var size = data.file.Length;
@@ -130,54 +133,40 @@ namespace scoi.Controllers
             }
 
             
-            var outputName = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
-            var outputName1 = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
-            var outputName2 = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
-            var outputName3 = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
+            var outputName = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
+            var outputName1 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
+            var outputName2 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
+            var outputName3 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
+            var outputName4 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
 
             jt.result_file = outputName;
             jt.action = () =>
             {
-                using var bmp_copy1 = img.Clone() as Bitmap;
-                using var bmp_copy2 = img.Clone() as Bitmap;
-
-                //Task t1 = new Task(() =>{
                     
-                    using var new_img = ImageOperations.BinaryzationAvg(img);
-                    new_img.Save(_hostingEnvironment.WebRootPath + outputName);
+                using var new_img = ImageOperations.BinaryzationAvg(img);
+                new_img.Save(_hostingEnvironment.WebRootPath + outputName);
 
 
-                    jt.progress += 25;
+                jt.progress += 20;
 
-                    using var new_img2 = ImageOperations.BinaryzationOtsu(img);
-                    new_img2.Save(_hostingEnvironment.WebRootPath + outputName1);
-                    jt.progress += 25;
-              //  });
+                using var new_img2 =  ImageOperations.BinaryzationOtsu(img);
+                new_img2.Save(_hostingEnvironment.WebRootPath + outputName1);
+               
+                jt.progress += 20;
 
-               // Task t2 = new Task(() =>{
-                    using var new_img3 = ImageOperations.BinarizationNiblack(bmp_copy1, data.wndSize, data.sens);
-                    new_img3.Save(_hostingEnvironment.WebRootPath + outputName2);
-                    jt.progress += 25;
-               // });
+                using var new_img3 = ImageOperations.BinarizationNiblack(img, data.wndSize, data.sens);
+                new_img3.Save(_hostingEnvironment.WebRootPath + outputName2);
+                jt.progress += 20;
 
-             //   Task t3 = new Task(() =>{
-                    using var new_img4 = ImageOperations.BinarizationSauval(bmp_copy2, data.sav_wndSize, data.sav_sens);
-                    new_img4.Save(_hostingEnvironment.WebRootPath + outputName3);
-                    jt.progress += 25;
-               // });
+                using var new_img4 = ImageOperations.BinarizationSauval(img, data.sav_wndSize, data.sav_sens);
+                new_img4.Save(_hostingEnvironment.WebRootPath + outputName3);
+                jt.progress += 20;
 
-                
+                using var new_img5 = ImageOperations.BinarizationBredly(img, data.bred_wndSize, data.bred_sens);
+                new_img5.Save(_hostingEnvironment.WebRootPath + outputName4);
 
-               // t1.RunSynchronously();
-               // t2.RunSynchronously();
-                //t3.RunSynchronously();
-                //t1.Start();
-                //t2.Start();
-                //t3.Start();
-
-                //t1.Wait();
-                //t2.Wait();
-                //t3.Wait();
+                jt.progress += 20;
+               
 
                 img.Dispose();
 
@@ -185,8 +174,7 @@ namespace scoi.Controllers
             };
             id = dictionary.setTask(jt);
 
-
-            return id.ToString() + ':' + outputName + ':' + outputName1+ ":" + outputName2 + ":" + outputName3;
+            return id.ToString() + ':' + outputName + ':' + outputName1+ ":" + outputName2 + ":" + outputName3 + ":" + outputName4;
         }
 
         [HttpPost]

@@ -393,44 +393,62 @@ namespace scoi.Models
                                         0.0721 * input_bytes[i  + 2]);
             }
 
-            
+
+            //интегральные матрицы для простого вычисления сумм.
+            //https://habr.com/ru/post/278435/
+
+            var int_mat = new int[height, width];
+            var int_sqr_mat = new int[height, width];
+
+            for (int i = 0; i < height; ++i)
+            {
+                for (int j = 0; j < width; ++j)
+                {
+                    int_mat [i,j] = input_bytes[i * width * 3 + j * 3] + 
+                                    (j  >= 1 ? int_mat[i, j - 1] : 0) +
+                                    (i  >= 1 ? int_mat[i-1, j] : 0) -
+                                    (i  >= 1 && j  >= 1 ? int_mat[i - 1, j - 1] : 0);
+
+                    int_sqr_mat[i, j] = input_bytes[i * width * 3 + j * 3]* input_bytes[i * width * 3 + j * 3] +
+                                    (j  >= 1 ? int_sqr_mat[i, j - 1] : 0) +
+                                    (i  >= 1 ? int_sqr_mat[i - 1, j] : 0) -
+                                    (i  >= 1 && j  >= 1 ? int_sqr_mat[i - 1, j - 1] : 0);
+                }
+            }
+
             for (int _i = 0; _i < height; ++_i)
             {
+                int y_min = _i - (int)Math.Ceiling(1.0 * a / 2) + 1;
+                y_min = (y_min < 0) ? 0 : y_min;
+                int y_max = _i + (int)Math.Floor(1.0 * a / 2);
+                y_max = (y_max >= height) ? height - 1 : y_max;
+
                 for (int _j = 0; _j < width; ++_j)
                 {
 
                     int index = _i * width * 3 + _j*3;
                     int sum = 0;
                     int sqr_sum = 0;
+
+                    int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
+                    x_min = (x_min < 0) ? 0 : x_min;
+                    int x_max = _j + (int)Math.Floor(1.0 * a / 2);
+                    x_max = (x_max >= width) ? width - 1 : x_max;
+
+
+
+                    sum = ( (x_min >= 1 && y_min >= 1) ? int_mat[y_min - 1, x_min - 1] : 0) + //A
+                        int_mat[y_max, x_max] -    //D
+                        ((y_min >= 1) ? int_mat[y_min - 1, x_max] : 0) -   //B
+                        ((x_min >= 1) ? int_mat[y_max, x_min - 1] : 0);  //C
+
+                    sqr_sum = ((x_min >= 1 && y_min >= 1) ? int_sqr_mat[y_min - 1, x_min - 1] : 0) + //A
+                              int_sqr_mat[y_max, x_max] -    //D
+                          ((y_min >= 1) ? int_sqr_mat[y_min - 1, x_max] : 0) -   //B
+                          ((x_min >= 1) ? int_sqr_mat[y_max, x_min - 1] : 0);  //C
                     
-                    for (int ii = 0; ii < a; ++ii)   // h - (i - h)     h - i + h = 2h-i
-                    {
-                        int i = _i + ii - a / 2;
-                        if (i < 0)
-                            i *= -1;
-                        if (i >= height)
-                            i = 2 * height - i - 1;
-
-                        for (int jj = 0; jj < a; ++jj)
-                        {
-                            int j = _j + jj - a / 2;
-
-                            if (j < 0)
-                                j *= -1;
-
-                            if (j >= width)
-                                j = 2 * width - j - 1;
-
-                            int inner_index = i * width * 3 + j * 3;
-
-                            sum += input_bytes[inner_index];
-                            sqr_sum += input_bytes[inner_index] * input_bytes[inner_index];
-                            
-                        }
-                    }
-
-                    sqr_sum /= a*a;
-                    sum /= a*a;
+                    sqr_sum /= (x_max-x_min+1)* (y_max - y_min + 1);
+                    sum /= (x_max - x_min + 1) * (y_max - y_min + 1);
 
                     double D = Math.Sqrt( sqr_sum - sum*sum );
                     double t = sum + sens*D;
@@ -481,8 +499,35 @@ namespace scoi.Models
             }
 
 
+            //интегральные матрицы для простого вычисления сумм.
+            //https://habr.com/ru/post/278435/
+
+            var int_mat = new int[height, width];
+            var int_sqr_mat = new int[height, width];
+
+            for (int i = 0; i < height; ++i)
+            {
+                for (int j = 0; j < width; ++j)
+                {
+                    int_mat[i, j] = input_bytes[i * width * 3 + j * 3] +
+                                    (j >= 1 ? int_mat[i, j - 1] : 0) +
+                                    (i >= 1 ? int_mat[i - 1, j] : 0) -
+                                    (i >= 1 && j >= 1 ? int_mat[i - 1, j - 1] : 0);
+
+                    int_sqr_mat[i, j] = input_bytes[i * width * 3 + j * 3] * input_bytes[i * width * 3 + j * 3] +
+                                    (j >= 1 ? int_sqr_mat[i, j - 1] : 0) +
+                                    (i >= 1 ? int_sqr_mat[i - 1, j] : 0) -
+                                    (i >= 1 && j >= 1 ? int_sqr_mat[i - 1, j - 1] : 0);
+                }
+            }
+
             for (int _i = 0; _i < height; ++_i)
             {
+                int y_min = _i - (int)Math.Ceiling(1.0 * a / 2) + 1;
+                y_min = (y_min < 0) ? 0 : y_min;
+                int y_max = _i + (int)Math.Floor(1.0 * a / 2);
+                y_max = (y_max >= height) ? height - 1 : y_max;
+
                 for (int _j = 0; _j < width; ++_j)
                 {
 
@@ -490,39 +535,31 @@ namespace scoi.Models
                     int sum = 0;
                     int sqr_sum = 0;
 
-                    for (int ii = 0; ii < a; ++ii)   // h - (i - h)     h - i + h = 2h-i
-                    {
-                        int i = _i + ii - a / 2;
-                        if (i < 0)
-                            i *= -1;
-                        if (i >= height)
-                            i = 2 * height - i - 1;
+                    int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
+                    x_min = (x_min < 0) ? 0 : x_min;
+                    int x_max = _j + (int)Math.Floor(1.0 * a / 2);
+                    x_max = (x_max >= width) ? width - 1 : x_max;
 
-                        for (int jj = 0; jj < a; ++jj)
-                        {
-                            int j = _j + jj - a / 2;
 
-                            if (j < 0)
-                                j *= -1;
 
-                            if (j >= width)
-                                j = 2 * width - j - 1;
+                    sum = ((x_min >= 1 && y_min >= 1) ? int_mat[y_min - 1, x_min - 1] : 0) + //A
+                        int_mat[y_max, x_max] -    //D
+                        ((y_min >= 1) ? int_mat[y_min - 1, x_max] : 0) -   //B
+                        ((x_min >= 1) ? int_mat[y_max, x_min - 1] : 0);  //C
 
-                            int inner_index = i * width * 3 + j * 3;
+                    sqr_sum = ((x_min >= 1 && y_min >= 1) ? int_sqr_mat[y_min - 1, x_min - 1] : 0) + //A
+                              int_sqr_mat[y_max, x_max] -    //D
+                          ((y_min >= 1) ? int_sqr_mat[y_min - 1, x_max] : 0) -   //B
+                          ((x_min >= 1) ? int_sqr_mat[y_max, x_min - 1] : 0);  //C
 
-                            sum += input_bytes[inner_index];
-                            sqr_sum += input_bytes[inner_index] * input_bytes[inner_index];
-
-                        }
-                    }
-
-                    sqr_sum /= a * a;
-                    sum /= a * a;
+                    sqr_sum /= (x_max - x_min + 1) * (y_max - y_min + 1);
+                    sum /= (x_max - x_min + 1) * (y_max - y_min + 1);
 
                     double D = Math.Sqrt(sqr_sum - sum * sum);
                     double t = sum * (1 + k * (D / 128 - 1));
 
-                    //output1Byte[index] = (byte)D;
+
+
 
                     //результат обработки кладем в синий канал
                     input_bytes[index + 1] = (input_bytes[index + 1] <= t) ? (byte)0 : (byte)255;
@@ -530,6 +567,90 @@ namespace scoi.Models
                 }
             }
 
+            for (int i = 0; i < input_bytes.Length; i += 3)
+            {
+                input_bytes[i + 0] = input_bytes[i + 1];
+                input_bytes[i + 2] = input_bytes[i + 1];
+            }
+
+
+            Bitmap img_ret = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            writeImageBytes(img_ret, input_bytes);
+            return img_ret;
+        }
+
+        public static Bitmap BinarizationBredly(Bitmap input, int a = 21, double t = 0.15)
+        {
+            int width = input.Width;
+            int height = input.Height;
+            using Bitmap _tmp = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            _tmp.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            using var g = Graphics.FromImage(_tmp);
+            g.DrawImageUnscaled(input, 0, 0);
+
+            byte[] input_bytes = getImgBytes(_tmp);
+
+
+
+            //чб изображние кладем в красный канал
+
+            for (int i = 0; i < input_bytes.Length; i += 3)
+            {
+                input_bytes[i] = (byte)(0.2125 * input_bytes[i + 0] + 0.7154 * input_bytes[i + 1] +
+                                        0.0721 * input_bytes[i + 2]);
+            }
+
+
+            //интегральные матрицы для простого вычисления сумм.
+            //https://habr.com/ru/post/278435/
+
+            var int_mat = new int[height, width];
+            
+            for (int i = 0; i < height; ++i)
+            {
+                for (int j = 0; j < width; ++j)
+                {
+                    int_mat[i, j] = input_bytes[i * width * 3 + j * 3] +
+                                    (j >= 1 ? int_mat[i, j - 1] : 0) +
+                                    (i >= 1 ? int_mat[i - 1, j] : 0) -
+                                    (i >= 1 && j >= 1 ? int_mat[i - 1, j - 1] : 0);
+                }
+            }
+
+            for (int _i = 0; _i < height; ++_i)
+            {
+                int y_min = _i - (int)Math.Ceiling(1.0 * a / 2) + 1;
+                y_min = (y_min < 0) ? 0 : y_min;
+                int y_max = _i + (int)Math.Floor(1.0 * a / 2);
+                y_max = (y_max >= height) ? height - 1 : y_max;
+
+                for (int _j = 0; _j < width; ++_j)
+                {
+
+                    int index = _i * width * 3 + _j * 3;
+                    int sum = 0;
+                    int sqr_sum = 0;
+
+                    int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
+                    x_min = (x_min < 0) ? 0 : x_min;
+                    int x_max = _j + (int)Math.Floor(1.0 * a / 2);
+                    x_max = (x_max >= width) ? width - 1 : x_max;
+
+
+
+                    sum = ((x_min >= 1 && y_min >= 1) ? int_mat[y_min - 1, x_min - 1] : 0) + //A
+                        int_mat[y_max, x_max] -    //D
+                        ((y_min >= 1) ? int_mat[y_min - 1, x_max] : 0) -   //B
+                        ((x_min >= 1) ? int_mat[y_max, x_min - 1] : 0);  //C
+
+                    int count = (x_max - x_min + 1) * (y_max - y_min + 1);
+
+
+                    //результат обработки кладем в синий канал
+                    input_bytes[index + 1] = ( (Int64)(input_bytes[index + 1]*count) < (Int64)(sum*(1.0-t))  ) ? (byte)0 : (byte)255;
+
+                }
+            }
 
             for (int i = 0; i < input_bytes.Length; i += 3)
             {
@@ -635,6 +756,14 @@ namespace scoi.Models
             Marshal.Copy(bytes, 0, data.Scan0, bytes.Length); //копируем байты массива в изображение
 
             img.UnlockBits(data);  //разблокируем изображение
+        }
+        public static Bitmap to1Bit(Bitmap input)
+        {
+            Bitmap b = new Bitmap(input.Width, input.Height, PixelFormat.Format1bppIndexed);
+            b.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            using var g = Graphics.FromImage(b);
+            g.DrawImageUnscaled(input, 0, 0);
+            return input;
         }
     }
 
