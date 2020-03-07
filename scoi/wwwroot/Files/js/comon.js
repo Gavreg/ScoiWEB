@@ -79,7 +79,7 @@ function onTimerProgress() {
 
 function progressMonitor(data) {
     $("#progress").text(data);
-    if (data == 100) {
+    if (data >= 100) {
         clearTimeout(timer);
         bTimer = false;
         $.ajax({
@@ -90,7 +90,12 @@ function progressMonitor(data) {
             //async: false
         });
         operation_complete();
+    } else if (data == -1) {
+        clearTimeout(timer);
+        bTimer = false;
+        $("#opTime").text("Ошибка обработки");
     }
+    
 }
 
 function progressTime(data) {

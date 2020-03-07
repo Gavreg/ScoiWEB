@@ -13,6 +13,7 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Routing.Template;
 using System.Globalization;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 //using Microsoft.EntityFrameworkCore.InMemory.Storage.Internal;
 
@@ -292,7 +293,7 @@ namespace scoi.Models
             //работаем только с ним
             for (int i = 0; i < input_bytes.Length; i += 3)
             {
-                input_bytes[i]= clmp(0.333 * input_bytes[i] + 0.333 * input_bytes[i+1] + 0.333 * input_bytes[i+2]);
+                input_bytes[i]= clmp(0.2125 * input_bytes[i] + 0.7154 * input_bytes[i+1] + 0.0721 * input_bytes[i+2]);
                 //input_bytes[i + 2] = input_bytes[i + 1] = input_bytes[i];
             }
             
@@ -366,6 +367,9 @@ namespace scoi.Models
 
         }
 
+        
+
+
         public static Bitmap BinarizationNiblack(Bitmap input, int a = 21, double sens = -0.2)
         {
 
@@ -385,8 +389,8 @@ namespace scoi.Models
             
             for (int i = 0; i < input_bytes.Length; i+=3)
             {
-                input_bytes[i] = (byte)(0.333 * input_bytes[i  + 0] + 0.333 * input_bytes[i  + 1] +
-                                       0.333 * input_bytes[i  + 2]);
+                input_bytes[i] = (byte)(0.2125 * input_bytes[i  + 0] + 0.7154 * input_bytes[i  + 1] +
+                                        0.0721 * input_bytes[i  + 2]);
             }
 
             
@@ -430,8 +434,9 @@ namespace scoi.Models
 
                     double D = Math.Sqrt( sqr_sum - sum*sum );
                     double t = sum + sens*D;
+                   
 
-                    //output1Byte[index] = (byte)D;
+                    
 
                     //результат обработки кладем в синий канал
                     input_bytes[index+1] = (input_bytes[index+1] <= t) ? (byte)0 : (byte)255;
@@ -444,6 +449,92 @@ namespace scoi.Models
             {
                 input_bytes[i + 0] = input_bytes[i  + 1];
                 input_bytes[i + 2] = input_bytes[i  + 1];
+            }
+
+
+            Bitmap img_ret = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            writeImageBytes(img_ret, input_bytes);
+            return img_ret;
+        }
+
+        public static Bitmap BinarizationSauval(Bitmap input, int a = 21, double k = 0.5)
+        {
+
+
+            int width = input.Width;
+            int height = input.Height;
+            using Bitmap _tmp = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            _tmp.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            using var g = Graphics.FromImage(_tmp);
+            g.DrawImageUnscaled(input, 0, 0);
+
+            byte[] input_bytes = getImgBytes(_tmp);
+
+
+
+            //чб изображние кладем в красный канал
+
+            for (int i = 0; i < input_bytes.Length; i += 3)
+            {
+                input_bytes[i] = (byte)(0.2125 * input_bytes[i + 0] + 0.7154 * input_bytes[i + 1] +
+                                        0.0721 * input_bytes[i + 2]);
+            }
+
+
+            for (int _i = 0; _i < height; ++_i)
+            {
+                for (int _j = 0; _j < width; ++_j)
+                {
+
+                    int index = _i * width * 3 + _j * 3;
+                    int sum = 0;
+                    int sqr_sum = 0;
+
+                    for (int ii = 0; ii < a; ++ii)   // h - (i - h)     h - i + h = 2h-i
+                    {
+                        int i = _i + ii - a / 2;
+                        if (i < 0)
+                            i *= -1;
+                        if (i >= height)
+                            i = 2 * height - i - 1;
+
+                        for (int jj = 0; jj < a; ++jj)
+                        {
+                            int j = _j + jj - a / 2;
+
+                            if (j < 0)
+                                j *= -1;
+
+                            if (j >= width)
+                                j = 2 * width - j - 1;
+
+                            int inner_index = i * width * 3 + j * 3;
+
+                            sum += input_bytes[inner_index];
+                            sqr_sum += input_bytes[inner_index] * input_bytes[inner_index];
+
+                        }
+                    }
+
+                    sqr_sum /= a * a;
+                    sum /= a * a;
+
+                    double D = Math.Sqrt(sqr_sum - sum * sum);
+                    double t = sum * (1 + k * (D / 128 - 1));
+
+                    //output1Byte[index] = (byte)D;
+
+                    //результат обработки кладем в синий канал
+                    input_bytes[index + 1] = (input_bytes[index + 1] <= t) ? (byte)0 : (byte)255;
+
+                }
+            }
+
+
+            for (int i = 0; i < input_bytes.Length; i += 3)
+            {
+                input_bytes[i + 0] = input_bytes[i + 1];
+                input_bytes[i + 2] = input_bytes[i + 1];
             }
 
 
@@ -466,7 +557,7 @@ namespace scoi.Models
 
             for (int i = 0; i < input_bytes.Length; i += 3)
             {
-                input_bytes[i] = clmp(0.333 * input_bytes[i] + 0.333 * input_bytes[i + 1] + 0.333 * input_bytes[i + 2]);
+                input_bytes[i] = clmp(0.2125 * input_bytes[i] + 0.7154 * input_bytes[i + 1] + 0.0721 * input_bytes[i + 2]);
                 input_bytes[i + 2] = input_bytes[i + 1] = input_bytes[i];
             }
 

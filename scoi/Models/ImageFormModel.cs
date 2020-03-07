@@ -18,6 +18,8 @@ namespace scoi.Models
         public IFormFile file { set; get; }
         public int wndSize { set; get; }
         public float sens { set; get; }
+        public int sav_wndSize { set; get; }
+        public float sav_sens { set; get; }
     }
 
     public class FurierModel

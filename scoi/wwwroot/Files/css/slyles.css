@@ -19,7 +19,7 @@
 }
 
 .footer {
-    position: fixed;
+    /*position: fixed;*/
     background: white;
     height: 50px;
     border-top: 1px solid grey;
@@ -31,4 +31,16 @@
     width: 100px;
     /*border: 1px solid red;*/
     margin: auto;
+}
+
+.bin_params {
+    border: 1px solid gray;
+    border-radius: 5px;
+    padding: 8px;
+    display: inline-block;
+    margin: 4px;
+}
+
+.result_element {
+    display: inline-block;
 }

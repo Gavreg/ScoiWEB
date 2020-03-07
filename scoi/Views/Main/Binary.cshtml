@@ -11,7 +11,7 @@
 
 </div>
 <br />
-<div style="border: 1px solid gray; border-radius: 5px; padding: 8px; display: inline-block;">
+<div class="bin_params">
     <label><b>Параметры бинаризации Ниблека</b></label>
 
     <div >
@@ -22,6 +22,19 @@
         <label>Чувствительность</label><input id="sens" value="-0,2"></input>
     </div>
 </div>
+
+<div class="bin_params">
+    <label><b>Параметры бинаризации Сауволы</b></label>
+
+    <div>
+        <label>Размер окна</label><input id="sav_wnd_size" value="11"></input>
+    </div>
+
+    <div>
+        <label>k</label><input id="sav_sens" value="0,5"></input>
+    </div>
+</div>
+
 <br />
 <br />
 <input id="btn_send" type="button" value="Загрузить" />
@@ -29,23 +42,27 @@
 <div class="result">
     <h3 id="progress"></h3> <br />
     <h3 id="opTime"></h3><br />
-    <div class="result_img">
+                         <div class="result_img">
 
-        <div>
-            <h3>Критерий Гаврилова</h3> <br />
-            <img id="resultimg" src="" />
-        </div>
+                             <div class="result_element">
+                                 <h3>Критерий Гаврилова</h3> <br />
+                                 <img id="resultimg" src="" />
+                             </div>
 
-        <div>
-            <h3>Критерий Отсу</h3> <br />
-            <img id="resultimg1" src="" />
-        </div>
+                             <div class="result_element">
+                                 <h3>Критерий Отсу</h3> <br />
+                                 <img id="resultimg1" src="" />
+                             </div>
 
-        <div>
-            <h3>Критерий Ниблека</h3> <br />
-            <img id="resultimg2" src="" />
-        </div>
-    </div>
+                             <div class="result_element">
+                                 <h3>Критерий Ниблека</h3> <br />
+                                 <img id="resultimg2" src="" />
+                             </div>
+                             <div class="result_element">
+                                 <h3>Критерий Сауволы</h3> <br />
+                                 <img id="resultimg3" src="" />
+                             </div>
+                         </div>
 </div>
 
 @section scripts
@@ -58,6 +75,7 @@
         let imagename = "";
         let imagename1 = "";
         let imagename2 = "";
+        let imagename3 = "";
 
         operation_url = "/Main/LoadImageBinary";
 
@@ -66,6 +84,8 @@
             data.append("file", $("#file")[0].files[0]);
             data.append("wndSize", $("#wnd_size").val());
             data.append("sens", $("#sens").val());
+            data.append("sav_wndSize", $("#sav_wnd_size").val());
+            data.append("sav_sens", $("#sav_sens").val());
 
             //data.append("matr_str", $("#matr").val());
             return data;
@@ -77,12 +97,14 @@
             imagename = files[0];
             imagename1 = files[1];
             imagename2 = files[2];
+            imagename3 = files[3];
         }
 
         operation_complete = () => {
             $("#resultimg").attr("src", imagename);
             $("#resultimg1").attr("src", imagename1);
             $("#resultimg2").attr("src", imagename2);
+            $("#resultimg3").attr("src", imagename3);
         }
 
 
