@@ -5,6 +5,7 @@
 
 scoi/wwwroot/Files/*.jpg
 scoi/wwwroot/Files/*.png
+scoi/wwwroot/Files/*.tiff
 
 # User-specific files
 *.rsuser
