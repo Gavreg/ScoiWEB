@@ -397,8 +397,8 @@ namespace scoi.Models
             //интегральные матрицы для простого вычисления сумм.
             //https://habr.com/ru/post/278435/
 
-            var int_mat = new int[height, width];
-            var int_sqr_mat = new int[height, width];
+            var int_mat = new long[height, width];
+            var int_sqr_mat = new long[height, width];
 
             for (int i = 0; i < height; ++i)
             {
@@ -427,8 +427,8 @@ namespace scoi.Models
                 {
 
                     int index = _i * width * 3 + _j*3;
-                    int sum = 0;
-                    int sqr_sum = 0;
+                    long sum = 0;
+                    long sqr_sum = 0;
 
                     int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
                     x_min = (x_min < 0) ? 0 : x_min;
@@ -502,8 +502,8 @@ namespace scoi.Models
             //интегральные матрицы для простого вычисления сумм.
             //https://habr.com/ru/post/278435/
 
-            var int_mat = new int[height, width];
-            var int_sqr_mat = new int[height, width];
+            var int_mat = new long[height, width];
+            var int_sqr_mat = new long[height, width];
 
             for (int i = 0; i < height; ++i)
             {
@@ -532,8 +532,8 @@ namespace scoi.Models
                 {
 
                     int index = _i * width * 3 + _j * 3;
-                    int sum = 0;
-                    int sqr_sum = 0;
+                    long sum = 0;
+                    long sqr_sum = 0;
 
                     int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
                     x_min = (x_min < 0) ? 0 : x_min;
@@ -604,7 +604,7 @@ namespace scoi.Models
             //интегральные матрицы для простого вычисления сумм.
             //https://habr.com/ru/post/278435/
 
-            var int_mat = new int[height, width];
+            var int_mat = new long[height, width];
             
             for (int i = 0; i < height; ++i)
             {
@@ -628,8 +628,8 @@ namespace scoi.Models
                 {
 
                     int index = _i * width * 3 + _j * 3;
-                    int sum = 0;
-                    int sqr_sum = 0;
+                    long sum = 0;
+                    long sqr_sum = 0;
 
                     int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
                     x_min = (x_min < 0) ? 0 : x_min;
