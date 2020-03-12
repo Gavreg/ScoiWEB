@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -133,6 +134,28 @@ namespace scoi.Models
             return new_bitmap;
         }
 
+        //быстрая функция для нахождения медианы
+        private static (double,int) quickselect((double, int)[] arr, int k)
+        {
+            if (arr.Length == 1)
+                return arr[0];
+
+            Random r = new Random();
+            int pivot = r.Next(arr.Length);
+            //int pivot = 0;
+
+            var lows = arr.Where(x => x.Item1  < arr[pivot].Item1).ToArray();
+            var high = arr.Where(x => x.Item1  > arr[pivot].Item1).ToArray();
+            var eqv  = arr.Where(x => x.Item1 == arr[pivot].Item1).ToArray();
+
+            if (k < lows.Length)
+                return quickselect(lows, k);
+            else if (k  < lows.Length + eqv.Length)
+                return eqv[k - lows.Length];
+            else
+                return quickselect(high, k - lows.Length - eqv.Length);
+            
+        }
         public static Bitmap Median(JobTask job, Bitmap input, int wnd_size)
         {
             job.progress = 0;
@@ -154,7 +177,7 @@ namespace scoi.Models
             byte[] new_bytes = new byte[width * height * 3];
 
             //массивчик для медианы
-            (int , int )[] M = new (int, int)[wnd_size*wnd_size];
+            (double , int )[] M = new (double, int)[wnd_size*wnd_size];
 
             for (int _i = 0; _i < height; ++_i)
             {
@@ -182,14 +205,17 @@ namespace scoi.Models
                             if (j >= width)
                                 j = 2 * width - j - 1 - 1;
 
-                            int c = (byte)(0.2125 * old_bytes[i*width*3 + j*3 + 2] + 0.7154 * old_bytes[i * width * 3 + j * 3 + 1] +
+                            double c = (0.2125 * old_bytes[i*width*3 + j*3 + 2] + 0.7154 * old_bytes[i * width * 3 + j * 3 + 1] +
                                            0.0721 * old_bytes[i * width * 3 + j * 3 + 0]);
                             M[ii * wnd_size + jj] = (c, i * width * 3 + j * 3);
     
                         }
                     }
-                    Array.Sort(M, (i1, i2) => i1.Item1.CompareTo(i2.Item1));
-                    var med = M[wnd_size * wnd_size / 2].Item2;
+
+                    var med = quickselect(M, wnd_size * wnd_size / 2).Item2;
+                    //Array.Sort(M, (i1, i2) => i1.Item1.CompareTo(i2.Item1));
+                   // var med = M[wnd_size * wnd_size / 2].Item2;
+
                     new_bytes[_i * width * 3 + _j * 3 + 0] = old_bytes[med + 0];
                     new_bytes[_i * width * 3 + _j * 3 + 1] = old_bytes[med + 1];
                     new_bytes[_i * width * 3 + _j * 3 + 2] = old_bytes[med + 2];
@@ -363,7 +389,7 @@ namespace scoi.Models
             //работаем только с ним
             for (int i = 0; i < input_bytes.Length; i += 3)
             {
-                input_bytes[i]= clmp(0.2125 * input_bytes[i] + 0.7154 * input_bytes[i+1] + 0.0721 * input_bytes[i+2]);
+                input_bytes[i]= clmp(0.2125 * input_bytes[i+2] + 0.7154 * input_bytes[i+1] + 0.0721 * input_bytes[i]);
                 //input_bytes[i + 2] = input_bytes[i + 1] = input_bytes[i];
             }
             
@@ -456,8 +482,8 @@ namespace scoi.Models
             
             for (int i = 0; i < input_bytes.Length; i+=3)
             {
-                input_bytes[i] = (byte)(0.2125 * input_bytes[i  + 0] + 0.7154 * input_bytes[i  + 1] +
-                                        0.0721 * input_bytes[i  + 2]);
+                input_bytes[i] = (byte)(0.2125 * input_bytes[i  + 2] + 0.7154 * input_bytes[i  + 1] +
+                                        0.0721 * input_bytes[i  + 0]);
             }
 
 
@@ -561,8 +587,8 @@ namespace scoi.Models
 
             for (int i = 0; i < input_bytes.Length; i += 3)
             {
-                input_bytes[i] = (byte)(0.2125 * input_bytes[i + 0] + 0.7154 * input_bytes[i + 1] +
-                                        0.0721 * input_bytes[i + 2]);
+                input_bytes[i] = (byte)(0.2125 * input_bytes[i + 2] + 0.7154 * input_bytes[i + 1] +
+                                        0.0721 * input_bytes[i + 0]);
             }
 
 
@@ -663,8 +689,8 @@ namespace scoi.Models
 
             for (int i = 0; i < input_bytes.Length; i += 3)
             {
-                input_bytes[i] = (byte)(0.2125 * input_bytes[i + 0] + 0.7154 * input_bytes[i + 1] +
-                                        0.0721 * input_bytes[i + 2]);
+                input_bytes[i] = (byte)(0.2125 * input_bytes[i + 2] + 0.7154 * input_bytes[i + 1] +
+                                        0.0721 * input_bytes[i + 0]);
             }
 
 
@@ -745,7 +771,7 @@ namespace scoi.Models
 
             for (int i = 0; i < input_bytes.Length; i += 3)
             {
-                input_bytes[i] = clmp(0.2125 * input_bytes[i] + 0.7154 * input_bytes[i + 1] + 0.0721 * input_bytes[i + 2]);
+                input_bytes[i] = clmp(0.2125 * input_bytes[i+2] + 0.7154 * input_bytes[i + 1] + 0.0721 * input_bytes[0]);
                 input_bytes[i + 2] = input_bytes[i + 1] = input_bytes[i];
             }
 
