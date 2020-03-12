@@ -13,6 +13,12 @@ namespace scoi.Models
         public string matr_str { set; get; }
     }
 
+    public class MedianFilterModel
+    {
+        public IFormFile file { set; get; }
+        public int wnd_size { set; get; }
+    }
+
     public class BinaryModel
     {
         public IFormFile file { set; get; }

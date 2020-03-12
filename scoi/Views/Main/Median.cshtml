@@ -1,0 +1,65 @@
+﻿
+@{
+    ViewData["Title"] = "Median";
+}
+
+
+
+<input id="file" type="file" onchange="showpreview(this);" />
+<br />
+<br />
+
+<div class="container">
+    <img id="imgpreview" src="">
+</div>
+<br />
+
+<input id="wnd_size" value="5"></input>
+<br />
+<br />
+<input id="btn_send" type="button" value="Загрузить" />
+<br />
+<div class="result">
+    <h3 id="progress"></h3> <br />
+    <h3 id="opTime"></h3><br />
+    <img id="resultimg" src="" />
+</div>
+
+
+
+
+@section scripts
+{
+    <script type="text/javascript" src="/Files/js/comon.js"></script>
+
+    <script type="text/javascript">
+
+
+        var imagename = "";
+
+        operation_url = "/Main/LoadImageMedian";
+
+        send_data = () => {
+            let data = new FormData();
+            data.append("file", $("#file")[0].files[0]);
+            data.append("wnd_size", $("#wnd_size").val());
+            return data;
+        };
+
+        data_sended = (respond) => {
+
+            imagename = respond;
+
+        }
+
+        operation_complete = () => {
+            $("#resultimg").attr("src", imagename);
+        }
+
+
+
+    </script>
+}
+
+
+

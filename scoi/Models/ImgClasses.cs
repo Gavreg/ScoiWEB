@@ -133,6 +133,77 @@ namespace scoi.Models
             return new_bitmap;
         }
 
+        public static Bitmap Median(JobTask job, Bitmap input, int wnd_size)
+        {
+            job.progress = 0;
+
+            int width = input.Width;
+            int height = input.Height;
+
+
+            Bitmap _tmp = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            _tmp.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            using (Graphics g = Graphics.FromImage(_tmp))
+            {
+                g.DrawImageUnscaled(input, 0, 0);
+                //g.DrawImage(input,0,0,new RectangleF(0,0,input.Width,input.Height),GraphicsUnit.Pixel);
+            }
+
+
+            byte[] old_bytes = getImgBytes(_tmp);
+            byte[] new_bytes = new byte[width * height * 3];
+
+            //массивчик для медианы
+            (int , int )[] M = new (int, int)[wnd_size*wnd_size];
+
+            for (int _i = 0; _i < height; ++_i)
+            {
+
+                for (int _j = 0; _j < width; ++_j)
+                {
+
+                    //собираем медиану
+                    
+                    for (int ii = 0; ii < wnd_size; ++ii)   // h - (i - h)     h - i + h = 2h-i
+                    {
+                        int i = _i + ii - wnd_size / 2;
+                        if (i < 0)
+                            i *= -1 + 1;
+                        if (i >= height)
+                            i = 2 * height - i - 1 - 1;
+
+                        for (int jj = 0; jj < wnd_size; ++jj)
+                        {
+                            int j = _j + jj - wnd_size / 2;
+
+                            if (j < 0)
+                                j *= -1 + 1;
+
+                            if (j >= width)
+                                j = 2 * width - j - 1 - 1;
+
+                            int c = (byte)(0.2125 * old_bytes[i*width*3 + j*3 + 2] + 0.7154 * old_bytes[i * width * 3 + j * 3 + 1] +
+                                           0.0721 * old_bytes[i * width * 3 + j * 3 + 0]);
+                            M[ii * wnd_size + jj] = (c, i * width * 3 + j * 3);
+    
+                        }
+                    }
+                    Array.Sort(M, (i1, i2) => i1.Item1.CompareTo(i2.Item1));
+                    var med = M[wnd_size * wnd_size / 2].Item2;
+                    new_bytes[_i * width * 3 + _j * 3 + 0] = old_bytes[med + 0];
+                    new_bytes[_i * width * 3 + _j * 3 + 1] = old_bytes[med + 1];
+                    new_bytes[_i * width * 3 + _j * 3 + 2] = old_bytes[med + 2];
+                }
+                job.progress = (int)Math.Floor(1.0 * _i / height * 100);
+
+            }
+            Bitmap new_bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            writeImageBytes(new_bitmap, new_bytes);
+
+            return new_bitmap;
+
+        }
+
         public static (Bitmap, Bitmap) Furier(JobTask job,Bitmap input, string filter, double in_filter_zone=1.0, double out_filter_zone=0.0 )
         {
             int width = input.Width;
@@ -274,7 +345,6 @@ namespace scoi.Models
 
         }
 
-
         //https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D1%82%D0%BE%D0%B4_%D0%9E%D1%86%D1%83
         public static Bitmap BinaryzationOtsu(Bitmap input)
         {
@@ -366,10 +436,7 @@ namespace scoi.Models
             return img_ret;
 
         }
-
         
-
-
         public static Bitmap BinarizationNiblack(Bitmap input, int a = 21, double sens = -0.2)
         {
 
@@ -765,6 +832,8 @@ namespace scoi.Models
             g.DrawImageUnscaled(input, 0, 0);
             return input;
         }
+
+        
     }
 
 

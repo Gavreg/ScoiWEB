@@ -2,20 +2,31 @@
 @{
     ViewData["Title"] = "Index";
 }
-
+<style>
+    li {
+        margin-bottom: 10px;
+    }
+    h3 {
+        margin: 0px;
+    }
+</style>
 <h1>Системы цифровой обработки изображений</h1>
 <ul>
 
     <li>
-        <a href="/Main/Binary">Бинаризация</a>
+        <h3><a href="/Main/Binary">Бинаризация</a></h3>
     </li>
 
     <li>
-        <a href="/Main/Matrix">Матрица</a>
+        <h3><a href="/Main/Matrix">Масочная фильтрация</a></h3>
     </li>
 
     <li>
-        <a href="/Main/Fur">Фурье-преобразование</a>
+        <h3><a href="/Main/Median">Медианная фильтрация</a></h3>
+    </li>
+
+    <li>
+        <h3><a href="/Main/Fur">Фурье-преобразование</a></h3>
     </li>
 </ul>
 

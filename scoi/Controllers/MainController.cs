@@ -40,6 +40,10 @@ namespace scoi.Controllers
         {
             return View();
         }
+        public ViewResult Median()
+        {
+            return View();
+        }
         [HttpPost]
         public async Task<string> LoadImage(ImageFormModel data)
         {
@@ -116,8 +120,7 @@ namespace scoi.Controllers
             return id.ToString() + ':' + outputName1 + ':' + outputName2;
         }
 
-
-
+        [HttpPost]
         public async Task<string> LoadImageBinary(BinaryModel data)
         {
             var size = data.file.Length;
@@ -175,6 +178,36 @@ namespace scoi.Controllers
             id = dictionary.setTask(jt);
 
             return id.ToString() + ':' + outputName + ':' + outputName1+ ":" + outputName2 + ":" + outputName3 + ":" + outputName4;
+        }
+
+        [HttpPost]
+        public async Task<string> LoadImageMedian(MedianFilterModel data)
+        {
+            var size = data.file.Length;
+
+            var jt = new JobTask();
+            ulong id = 0;
+           
+            using var stream = new MemoryStream();
+            
+            await data.file.CopyToAsync(stream);
+            Bitmap img = new Bitmap(stream);
+            
+            var outputName = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
+
+            jt.result_file = outputName;
+            jt.action = () =>
+            {
+                using var new_img = ImageOperations.Median(jt,img,data.wnd_size);
+                new_img.Save(_hostingEnvironment.WebRootPath + outputName);
+                img.Dispose();
+                jt.progress = 100;
+
+            };
+
+            id = dictionary.setTask(jt);
+
+            return id.ToString() + ':' + outputName;
         }
 
         [HttpPost]
