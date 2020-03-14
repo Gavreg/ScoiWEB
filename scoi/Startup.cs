@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -38,12 +40,28 @@ namespace scoi
                 app.UseDeveloperExceptionPage();
             }
 
-           /* app.Run(async (context) =>
+            var supportedCultures = new[]
             {
-                await context.Response.WriteAsync("Hello World!");
+                new CultureInfo("en-US"),
+            };
+
+            app.UseRequestLocalization(new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new RequestCulture("en-US"),
+                // Formatting numbers, dates, etc.
+                SupportedCultures = supportedCultures,
+                // UI strings that we have localized.
+                SupportedUICultures = supportedCultures
             });
 
-            */
+            
+
+            /* app.Run(async (context) =>
+             {
+                 await context.Response.WriteAsync("Hello World!");
+             });
+
+             */
 
         }
     }

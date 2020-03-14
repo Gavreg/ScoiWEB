@@ -778,10 +778,13 @@ namespace scoi.Models
             var t = input_bytes.Average(x=>x);
 
             var bytes = input_bytes.Select(x => (x<t)?(byte)0: (byte)255 ).ToArray();
+            int a = 10;
+            var ty =  a << 2;
 
             Bitmap img_ret = new Bitmap(width, height, PixelFormat.Format24bppRgb);
             img_ret.SetResolution(input.HorizontalResolution, input.VerticalResolution);
             writeImageBytes(img_ret, bytes);
+
             return img_ret;
 
         }

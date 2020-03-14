@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
@@ -19,6 +20,7 @@ namespace scoi.Controllers
         public MainController(IHostingEnvironment hostingEnvironment)
         {
             _hostingEnvironment = hostingEnvironment;
+            Thread.CurrentThread.CurrentCulture = new CultureInfo("es-Us");
         }
 
         public ViewResult Matrix()
