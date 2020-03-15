@@ -36,7 +36,7 @@ function SendImage() {
     clearTimeout(timer);
     var bTimer = false;
     id = -1;
-
+    $("#progress").text("");
     $.ajax({
         url: operation_url,
         type: "post",

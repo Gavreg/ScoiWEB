@@ -28,6 +28,8 @@ namespace scoi.Models
         public float sav_sens { set; get; }
         public int bred_wndSize { set; get; }
         public float bred_sens { set; get; }
+        public int wolf_wndSize { set; get; }
+        public float wolf_sens { set; get; }
     }
 
     public class FurierModel

@@ -143,6 +143,7 @@ namespace scoi.Controllers
             var outputName2 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
             var outputName3 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
             var outputName4 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
+            var outputName5 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
 
             jt.result_file = outputName;
             jt.action = () =>
@@ -152,26 +153,30 @@ namespace scoi.Controllers
                 new_img.Save(_hostingEnvironment.WebRootPath + outputName);
 
 
-                jt.progress += 20;
+                jt.progress += 16;
 
                 using var new_img2 =  ImageOperations.BinaryzationOtsu(img);
                 new_img2.Save(_hostingEnvironment.WebRootPath + outputName1);
                
-                jt.progress += 20;
+                jt.progress += 16;
 
                 using var new_img3 = ImageOperations.BinarizationNiblack(img, data.wndSize, data.sens);
                 new_img3.Save(_hostingEnvironment.WebRootPath + outputName2);
-                jt.progress += 20;
+                jt.progress += 16;
 
                 using var new_img4 = ImageOperations.BinarizationSauval(img, data.sav_wndSize, data.sav_sens);
                 new_img4.Save(_hostingEnvironment.WebRootPath + outputName3);
-                jt.progress += 20;
+                jt.progress += 16;
 
                 using var new_img5 = ImageOperations.BinarizationBredly(img, data.bred_wndSize, data.bred_sens);
                 new_img5.Save(_hostingEnvironment.WebRootPath + outputName4);
+                jt.progress += 16;
+                
+                using var new_img6 = ImageOperations.BinarizationWolf(img, data.wolf_wndSize, data.wolf_sens);
+                new_img6.Save(_hostingEnvironment.WebRootPath + outputName5);
+                jt.progress += 16;
 
-                jt.progress += 20;
-               
+
 
                 img.Dispose();
 
@@ -179,7 +184,7 @@ namespace scoi.Controllers
             };
             id = dictionary.setTask(jt);
 
-            return id.ToString() + ':' + outputName + ':' + outputName1+ ":" + outputName2 + ":" + outputName3 + ":" + outputName4;
+            return id.ToString() + ':' + outputName + ':' + outputName1+ ":" + outputName2 + ":" + outputName3 + ":" + outputName4 + ":" + outputName5;
         }
 
         [HttpPost]

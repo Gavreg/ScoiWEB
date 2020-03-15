@@ -672,6 +672,118 @@ namespace scoi.Models
             return img_ret;
         }
 
+        public static Bitmap BinarizationWolf(Bitmap input, int a = 21, double gain = 0.5)
+        {
+
+
+            int width = input.Width;
+            int height = input.Height;
+            using Bitmap _tmp = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            _tmp.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            using var g = Graphics.FromImage(_tmp);
+            g.DrawImageUnscaled(input, 0, 0);
+
+            byte[] input_bytes = getImgBytes(_tmp);
+
+
+
+            //чб изображние кладем в красный канал
+
+            byte M = 255;
+            for (int i = 0; i < input_bytes.Length; i += 3)
+            {
+                input_bytes[i] = (byte)(0.2125 * input_bytes[i + 2] + 0.7154 * input_bytes[i + 1] +
+                                        0.0721 * input_bytes[i + 0]);
+                if (input_bytes[i] < M)
+                    M = input_bytes[i];
+            }
+
+
+            //интегральные матрицы для простого вычисления сумм.
+            //https://habr.com/ru/post/278435/
+
+            var int_mat = new long[height, width];
+            var int_sqr_mat = new long[height, width];
+
+            for (int i = 0; i < height; ++i)
+            {
+                for (int j = 0; j < width; ++j)
+                {
+                    int_mat[i, j] = input_bytes[i * width * 3 + j * 3] +
+                                    (j >= 1 ? int_mat[i, j - 1] : 0) +
+                                    (i >= 1 ? int_mat[i - 1, j] : 0) -
+                                    (i >= 1 && j >= 1 ? int_mat[i - 1, j - 1] : 0);
+
+                    int_sqr_mat[i, j] = input_bytes[i * width * 3 + j * 3] * input_bytes[i * width * 3 + j * 3] +
+                                    (j >= 1 ? int_sqr_mat[i, j - 1] : 0) +
+                                    (i >= 1 ? int_sqr_mat[i - 1, j] : 0) -
+                                    (i >= 1 && j >= 1 ? int_sqr_mat[i - 1, j - 1] : 0);
+                }
+            }
+
+            double R = 0;
+            double[] s_arr = new double[width*height];
+            double[] m_arr = new double[width*height];
+
+            for (int _i = 0; _i < height; ++_i)
+            {
+                int y_min = _i - (int)Math.Ceiling(1.0 * a / 2) + 1;
+                y_min = (y_min < 0) ? 0 : y_min;
+                int y_max = _i + (int)Math.Floor(1.0 * a / 2);
+                y_max = (y_max >= height) ? height - 1 : y_max;
+
+                for (int _j = 0; _j < width; ++_j)
+                {
+
+                    int index = _i * width * 3 + _j * 3;
+                    long sum = 0;
+                    long sqr_sum = 0;
+
+                    int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
+                    x_min = (x_min < 0) ? 0 : x_min;
+                    int x_max = _j + (int)Math.Floor(1.0 * a / 2);
+                    x_max = (x_max >= width) ? width - 1 : x_max;
+
+
+
+                    sum = ((x_min >= 1 && y_min >= 1) ? int_mat[y_min - 1, x_min - 1] : 0) + //A
+                          int_mat[y_max, x_max] -    //D
+                          ((y_min >= 1) ? int_mat[y_min - 1, x_max] : 0) -   //B
+                          ((x_min >= 1) ? int_mat[y_max, x_min - 1] : 0);  //C
+
+                    sqr_sum = ((x_min >= 1 && y_min >= 1) ? int_sqr_mat[y_min - 1, x_min - 1] : 0) + //A
+                              int_sqr_mat[y_max, x_max] -    //D
+                              ((y_min >= 1) ? int_sqr_mat[y_min - 1, x_max] : 0) -   //B
+                              ((x_min >= 1) ? int_sqr_mat[y_max, x_min - 1] : 0);  //C
+
+                    sqr_sum /= (x_max - x_min + 1) * (y_max - y_min + 1);
+                    sum /= (x_max - x_min + 1) * (y_max - y_min + 1);
+                    double D = Math.Sqrt(sqr_sum - sum * sum);
+
+                    m_arr[_i * width + _j] = sum;
+                    s_arr[_i * width + _j] = D;
+
+                    if (D > R) R = D;
+
+                }
+            }
+
+
+            for (int i = 0; i < width * height; ++i)
+            {
+                double t = (1.0 - gain) * m_arr[i] + gain * M + gain * s_arr[i] / R * (m_arr[i] - M);
+
+                input_bytes[i*3 + 1] = (input_bytes[i*3 + 1] <= t) ? (byte)0 : (byte)255;
+                input_bytes[i*3 + 0] = input_bytes[i * 3 + 1];
+                input_bytes[i * 3 + 2] = input_bytes[i * 3 + 1];
+            }
+            
+   
+            Bitmap img_ret = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            writeImageBytes(img_ret, input_bytes);
+            return img_ret;
+        }
+
         public static Bitmap BinarizationBredly(Bitmap input, int a = 21, double t = 0.15)
         {
             int width = input.Width;

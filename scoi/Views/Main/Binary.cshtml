@@ -34,6 +34,8 @@
         <label>k</label><input id="sav_sens" value="0.25"></input>
     </div>
 </div>
+
+
 <div class="bin_params">
     <label><b>Параметры бинаризации Брэдли-Рота</b></label>
 
@@ -46,6 +48,18 @@
     </div>
 </div>
 
+<div class="bin_params">
+    <label><b>Параметры бинаризации Вульфа</b></label>
+
+    <div>
+        <label>Размер окна</label><input id="wolf_wnd_size" value="15"></input>
+    </div>
+
+    <div>
+        <label>a</label><input id="wolf_sens" value="0.5"></input>
+    </div>
+</div>
+
 <br />
 <br />
 <input id="btn_send" type="button" value="Загрузить" />
@@ -53,31 +67,35 @@
 <div class="result">
     <h3 id="progress"></h3> <br />
     <h3 id="opTime"></h3><br />
-            <div class="result_img">
+                         <div class="result_img">
 
-                <div class="result_element">
-                    <h3>Критерий Гаврилова</h3> <br />
-                    <img id="resultimg" src="" />
-                </div>
+                             <div class="result_element">
+                                 <h3>Критерий Гаврилова</h3> <br />
+                                 <img id="resultimg" src="" />
+                             </div>
 
-                <div class="result_element">
-                    <h3>Критерий Отсу</h3> <br />
-                    <img id="resultimg1" src="" />
-                </div>
+                             <div class="result_element">
+                                 <h3>Критерий Отсу</h3> <br />
+                                 <img id="resultimg1" src="" />
+                             </div>
 
-                <div class="result_element">
-                    <h3>Критерий Ниблека</h3> <br />
-                    <img id="resultimg2" src="" />
-                </div>
-                <div class="result_element">
-                    <h3>Критерий Сауволы</h3> <br />
-                    <img id="resultimg3" src="" />
-                </div>
-                <div class="result_element">
-                    <h3>Критерий Брэдли-Рота</h3> <br />
-                    <img id="resultimg4" src="" />
-                </div>
-            </div>
+                             <div class="result_element">
+                                 <h3>Критерий Ниблека</h3> <br />
+                                 <img id="resultimg2" src="" />
+                             </div>
+                             <div class="result_element">
+                                 <h3>Критерий Сауволы</h3> <br />
+                                 <img id="resultimg3" src="" />
+                             </div>
+                             <div class="result_element">
+                                 <h3>Критерий Брэдли-Рота</h3> <br />
+                                 <img id="resultimg4" src="" />
+                             </div>
+                             <div class="result_element">
+                                 <h3>Критерий Вульфа</h3> <br />
+                                 <img id="resultimg5" src="" />
+                             </div>
+                         </div>
 </div>
 
 @section scripts
@@ -92,6 +110,7 @@
         let imagename2 = "";
         let imagename3 = "";
         let imagename4 = "";
+        let imagename5 = "";
 
         operation_url = "/Main/LoadImageBinary";
 
@@ -104,6 +123,8 @@
             data.append("sav_sens", $("#sav_sens").val());
             data.append("bred_wndSize", $("#bred_wnd_size").val());
             data.append("bred_sens", $("#bred_sens").val());
+            data.append("wolf_wndSize", $("#wolf_wnd_size").val());
+            data.append("wolf_sens", $("#wolf_sens").val());
 
             //data.append("matr_str", $("#matr").val());
             return data;
@@ -117,6 +138,7 @@
             imagename2 = files[2];
             imagename3 = files[3];
             imagename4 = files[4];
+            imagename5 = files[5];
         }
 
         operation_complete = () => {
@@ -125,6 +147,7 @@
             $("#resultimg2").attr("src", imagename2);
             $("#resultimg3").attr("src", imagename3);
             $("#resultimg4").attr("src", imagename4);
+            $("#resultimg5").attr("src", imagename5);
         }
 
 
