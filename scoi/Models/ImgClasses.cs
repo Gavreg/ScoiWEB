@@ -550,7 +550,7 @@ namespace scoi.Models
                     
 
                     //результат обработки кладем в синий канал
-                    input_bytes[index+1] = (input_bytes[index+1] <= t) ? (byte)0 : (byte)255;
+                    input_bytes[index+1] = (input_bytes[index] <= t) ? (byte)0 : (byte)255;
 
                 }
             }
@@ -654,8 +654,8 @@ namespace scoi.Models
 
 
 
-                    //результат обработки кладем в синий канал
-                    input_bytes[index + 1] = (input_bytes[index + 1] <= t) ? (byte)0 : (byte)255;
+                    //результат обработки кладем в зеленый канал
+                    input_bytes[index + 1] = (input_bytes[index] <= t) ? (byte)0 : (byte)255;
 
                 }
             }
@@ -773,7 +773,7 @@ namespace scoi.Models
             {
                 double t = (1.0 - gain) * m_arr[i] + gain * M + gain * s_arr[i] / R * (m_arr[i] - M);
 
-                input_bytes[i*3 + 1] = (input_bytes[i*3 + 1] <= t) ? (byte)0 : (byte)255;
+                input_bytes[i*3 + 1] = (input_bytes[i*3] <= t) ? (byte)0 : (byte)255;
                 input_bytes[i*3 + 0] = input_bytes[i * 3 + 1];
                 input_bytes[i * 3 + 2] = input_bytes[i * 3 + 1];
             }
@@ -834,7 +834,7 @@ namespace scoi.Models
 
                     int index = _i * width * 3 + _j * 3;
                     long sum = 0;
-                    long sqr_sum = 0;
+                    
 
                     int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
                     x_min = (x_min < 0) ? 0 : x_min;
@@ -852,7 +852,7 @@ namespace scoi.Models
 
 
                     //результат обработки кладем в синий канал
-                    input_bytes[index + 1] = ( (Int64)(input_bytes[index + 1]*count) < (Int64)(sum*(1.0-t))  ) ? (byte)0 : (byte)255;
+                    input_bytes[index + 1] = ( (Int64)(input_bytes[index]*count) < (Int64)(sum*(1.0-t))  ) ? (byte)0 : (byte)255;
 
                 }
             }

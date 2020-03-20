@@ -8,7 +8,7 @@ namespace scoi.Models
 {
     static class Mathematics
     {
-        public static int NOD(int a, int b)
+        public static long NOD(long a, long b)
         {
             if (a == 0 || b == 0)
                 return a + b;
@@ -30,7 +30,7 @@ namespace scoi.Models
             
         }
 
-        public static int NOK(int a, int b)
+        public static long NOK(long a, long b)
         {
             return Math.Abs(a * b) / NOD(a, b);
         }

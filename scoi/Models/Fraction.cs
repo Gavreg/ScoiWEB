@@ -10,17 +10,17 @@ namespace scoi.Models
     public class Fraction
     {
 
-        int numerator;
-        int denominator;
-        int sign;
+        long numerator;
+        long denominator;
+        long sign;
 
-        public int Numeretor
+        public long Numeretor
         {
             get => numerator;
             set => numerator = value;
         }
 
-        public int Denumerator
+        public long Denumerator
         {
             get => denominator;
             set => denominator = value;
@@ -38,11 +38,11 @@ namespace scoi.Models
             if (sign < 0)
                 s += "-";
 
-            int nok = Mathematics.NOK(10, denominator);
+            var nok = Mathematics.NOK(10, denominator);
             
             for (int i = 1; i<=2; i++)
             {
-                if ((int)Math.Pow(10,i)%denominator==0)
+                if (Math.Pow(10,i)%denominator==0)
                 {
                     s += Convert.ToString(1.0 * numerator / denominator, new CultureInfo("en-US"));
                     return s;
@@ -57,7 +57,7 @@ namespace scoi.Models
 
         }
 
-        public Fraction(int i)
+        public Fraction(long i)
         {
             denominator = 1;
             numerator = Math.Abs(i);
@@ -89,8 +89,8 @@ namespace scoi.Models
             string [] arr = s.Split(new char[] { '/'});
             if ( arr.Count<string>() == 2)
             {
-                int a = Convert.ToInt32(arr[0]);
-                int b = Convert.ToInt32(arr[1]);
+                var a = Convert.ToInt64(arr[0]);
+                var b = Convert.ToInt64(arr[1]);
 
                 numerator = Math.Abs(a);
                 denominator = Math.Abs(b);
@@ -102,9 +102,9 @@ namespace scoi.Models
             if (arr.Count<string>()==1)
             {
                 double a = Convert.ToDouble(s, new CultureInfo("en-US") );
-                double drobn = a - (int)a; 
+                double drobn = a - (long)a; 
 
-                numerator = Math.Abs((int)a);
+                numerator = Math.Abs((long)a);
                 denominator = 1;
                 sign = getSign(a);
 
@@ -116,12 +116,12 @@ namespace scoi.Models
                     string tmp = string.Empty;
                     tmp = s.Split(new char[] { '.' })[1];
 
-                    int razm = tmp.Length;
-                    int chislo = Convert.ToInt32(tmp);
+                    var razm = tmp.Length;
+                    var chislo = Convert.ToInt64(tmp);
 
                     Fraction f = Fraction.Null();
                     f.numerator = chislo;
-                    f.denominator = (int)Math.Pow(10, razm);
+                    f.denominator = (long)Math.Pow(10, razm);
 
                      Fraction f1 = this + sign * f;
 
@@ -149,7 +149,7 @@ namespace scoi.Models
         
         public void Rediction()
         {
-            int nod = Mathematics.NOD(numerator, denominator);
+            var nod = Mathematics.NOD(numerator, denominator);
             numerator /= nod;
             denominator /= nod;
         }  
@@ -158,10 +158,10 @@ namespace scoi.Models
         {
             Fraction f = Fraction.Null();
 
-            int new_d = Mathematics.NOK(f1.denominator, f2.denominator);
-            int m1 = new_d / f1.denominator;
-            int m2 = new_d / f2.denominator;
-            int new_n = f1.sign * m1 * f1.numerator + f2.sign * m2 * f2.numerator;
+            var new_d = Mathematics.NOK(f1.denominator, f2.denominator);
+            var m1 = new_d / f1.denominator;
+            var m2 = new_d / f2.denominator;
+            var new_n = f1.sign * m1 * f1.numerator + f2.sign * m2 * f2.numerator;
 
             
             f.sign = getSign(new_n);
@@ -200,13 +200,13 @@ namespace scoi.Models
 
         }
 
-        public static Fraction operator *(int i, Fraction f2)
+        public static Fraction operator *(long i, Fraction f2)
         {
             Fraction f = new Fraction(i);
 
             return f*f2;
         }
-        public static Fraction operator *(Fraction f, int i)
+        public static Fraction operator *(Fraction f, long i)
         {
             return i * f;
         }
