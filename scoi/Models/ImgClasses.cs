@@ -230,7 +230,12 @@ namespace scoi.Models
 
         }
 
-        public static (Bitmap, Bitmap) Furier(JobTask job,Bitmap input, string filter, double in_filter_zone=1.0, double out_filter_zone=0.0 )
+        public static double F(double x)
+        {
+            return Math.Log(x+1);
+        }
+
+        public static (Bitmap, Bitmap) Furier(JobTask job,Bitmap input, string filter, double in_filter_zone=1.0, double out_filter_zone=0.0, double furier_multiplyer = 1.0)
         {
             int width = input.Width;
             int height = input.Height;
@@ -261,10 +266,7 @@ namespace scoi.Models
             using Graphics g = Graphics.FromImage(_tmp);
             g.DrawImageUnscaled(input, 0, 0);
 
-
-
             byte[] old_bytes = getImgBytes(_tmp);
-
 
 
             var ss = StringSplitOptions.RemoveEmptyEntries;
@@ -277,6 +279,8 @@ namespace scoi.Models
 
             
             job.progress = 0;
+
+            
 
             Complex[] complex_bytes = new Complex[new_width * new_height];
             for (int color = 0; color <= 2; color++)
@@ -294,7 +298,7 @@ namespace scoi.Models
                 job.progress += 16;
 
 
-                var max_ma = complex_bytes.Max(x => Math.Log(x.Magnitude+1.0,100));
+                var max_ma = complex_bytes.Max(x => F( x.Imaginary ) );
                 //var max_im = complex_bytes.Max(x => Math.Log10(x.Imaginary+1.0));
 
                /* var max_ma = Math.Log10(complex_bytes[1].Real + 1.0);
@@ -333,7 +337,9 @@ namespace scoi.Models
                     int y = i / new_width;
                     int x = i - y * new_width;
                     new_bytes[i * 3 + color] = clmp(Math.Round( (Math.Pow(-1,x+y) * complex_bytes_result[i]).Real));
-                    furier_ma_bytes[i * 3 + color] = clmp(Math.Log(complex_bytes[i].Magnitude + 1.0, 100) * 255.0 / max_ma);
+                    furier_ma_bytes[i * 3 + color] = clmp(furier_multiplyer * F(complex_bytes[i].Magnitude)*255/max_ma );
+                    //furier_ma_bytes[i * 3 + color] = clmp(furier_multiplyer*Math.Log(complex_bytes[i].Magnitude + 1.0, 100) * 255.0 / max_ma);
+                    //furier_ma_bytes[i * 3 + color] = clmp(furier_multiplyer * complex_bytes[i].Magnitude);
                 }
                 job.progress += 16;
             }
@@ -351,23 +357,32 @@ namespace scoi.Models
             }
             sw.Close();
            */
-
-            Bitmap new_bitmap = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
-
+           
+            //формируем восстановленное изображение
+            using Bitmap new_bitmap = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
             writeImageBytes(new_bitmap,new_bytes);
 
+            //рисуем восстановленное изображение на новом, размер которого совпадает с исходным
+            //так как размер восстановленного может отличатся (степени двойки)
+            Bitmap new_bitamp_ret = new Bitmap(width,height, PixelFormat.Format24bppRgb);
+            new_bitamp_ret.SetResolution(new_bitmap.HorizontalResolution, new_bitmap.VerticalResolution);
+            using (Graphics g1 = Graphics.FromImage(new_bitamp_ret))
+            {
+                g1.DrawImageUnscaled(new_bitmap,0,0);
+            }
+
+            //рисуем Фурье-образ и рисуем на нем оверлеи.
             Bitmap new_bitmap_re = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
             writeImageBytes(new_bitmap_re, furier_ma_bytes);
+            using var g_fur = Graphics.FromImage(new_bitmap_re);
+            foreach (var v in filter_params_double)
+            {
+                g_fur.DrawEllipse(Pens.GreenYellow, (int)v[0] - (int)v[2], (int)v[1] - (int)v[2], (int)v[2] * 2, (int)v[2] * 2);
+                g_fur.DrawEllipse(Pens.GreenYellow, (int)v[0] - (int)v[3], (int)v[1] - (int)v[3], (int)v[3] * 2, (int)v[3] * 2);
+            }
 
 
-            //Bitmap new_bitamp_ret = new Bitmap(width,height, PixelFormat.Format24bppRgb);
-            //new_bitamp_ret.SetResolution(new_bitmap.HorizontalResolution, new_bitmap.VerticalResolution);
-            //using (Graphics g1 = Graphics.FromImage(new_bitamp_ret))
-            //{
-            //    g1.DrawImageUnscaled(new_bitmap,0,0);
-            //}
-            
-            return (new_bitmap, new_bitmap_re);
+            return (new_bitamp_ret, new_bitmap_re);
 
         }
 

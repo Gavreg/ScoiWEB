@@ -104,7 +104,7 @@ namespace scoi.Controllers
                 Bitmap img1=null, img2=null;
                 try
                 {
-                    (img1, img2) = ImageOperations.Furier(jt, img, data.filter, data.inFilter, data.outFilter);
+                    (img1, img2) = ImageOperations.Furier(jt, img, data.filter, data.inFilter, data.outFilter,data.fur_mult);
                     img1.Save(_hostingEnvironment.WebRootPath + outputName1);
                     img2.Save(_hostingEnvironment.WebRootPath + outputName2);
                 }

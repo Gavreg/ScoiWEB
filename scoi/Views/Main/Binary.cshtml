@@ -1,8 +1,8 @@
 ﻿@{
     ViewData["Title"] = "Binary";
 }
-
-<input id="file" type="file" onchange="showpreview(this);" />
+<h1>Банаризация</h1>
+Изображение:<input id="file" type="file" onchange="showpreview(this);" />
 <br />
 <br />
 
@@ -10,15 +10,19 @@
     <img id="imgpreview" src="">
 
 </div>
+<div>
+    <label id="img_w">w=</label> <br />
+    <label id="img_h">h=</label>
+</div>
 <br />
 <div class="bin_params">
     <label><b>Параметры бинаризации Ниблека</b></label>
 
-    <div >
+    <div>
         <label>Размер окна</label><input id="wnd_size" value="15"></input>
     </div>
-    
-    <div >
+
+    <div>
         <label>Чувствительность</label><input id="sens" value="-0.2"></input>
     </div>
 </div>
@@ -67,35 +71,35 @@
 <div class="result">
     <h3 id="progress"></h3> <br />
     <h3 id="opTime"></h3><br />
-                         <div class="result_img">
+    <div class="result_img">
 
-                             <div class="result_element">
-                                 <h3>Критерий Гаврилова</h3> <br />
-                                 <img id="resultimg" src="" />
-                             </div>
+        <div class="result_element">
+            <h3>Критерий Гаврилова</h3> <br />
+            <img id="resultimg" src="" />
+        </div>
 
-                             <div class="result_element">
-                                 <h3>Критерий Отсу</h3> <br />
-                                 <img id="resultimg1" src="" />
-                             </div>
+        <div class="result_element">
+            <h3>Критерий Отсу</h3> <br />
+            <img id="resultimg1" src="" />
+        </div>
 
-                             <div class="result_element">
-                                 <h3>Критерий Ниблека</h3> <br />
-                                 <img id="resultimg2" src="" />
-                             </div>
-                             <div class="result_element">
-                                 <h3>Критерий Сауволы</h3> <br />
-                                 <img id="resultimg3" src="" />
-                             </div>
-                             <div class="result_element">
-                                 <h3>Критерий Брэдли-Рота</h3> <br />
-                                 <img id="resultimg4" src="" />
-                             </div>
-                             <div class="result_element">
-                                 <h3>Критерий Вульфа</h3> <br />
-                                 <img id="resultimg5" src="" />
-                             </div>
-                         </div>
+        <div class="result_element">
+            <h3>Критерий Ниблека</h3> <br />
+            <img id="resultimg2" src="" />
+        </div>
+        <div class="result_element">
+            <h3>Критерий Сауволы</h3> <br />
+            <img id="resultimg3" src="" />
+        </div>
+        <div class="result_element">
+            <h3>Критерий Брэдли-Рота</h3> <br />
+            <img id="resultimg4" src="" />
+        </div>
+        <div class="result_element">
+            <h3>Критерий Вульфа</h3> <br />
+            <img id="resultimg5" src="" />
+        </div>
+    </div>
 </div>
 
 @section scripts

@@ -38,5 +38,8 @@ namespace scoi.Models
         public string filter { set; get; }
         public double inFilter { set; get; }
         public double outFilter { set; get; }
+
+        public double fur_mult { set; get; }
+
     }
 }

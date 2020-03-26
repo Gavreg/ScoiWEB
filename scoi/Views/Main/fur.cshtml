@@ -3,20 +3,24 @@
     ViewData["Title"] = "fur";
 }
 
-<h1>fur</h1>
+<h1>Частотная фильтрация</h1>
 
+Изображение:
 <input id="file" type="file" onchange="showpreview(this);" />
 <div class="container">
     <img id="imgpreview" src="">
 </div>
 <div>
-    <label id="img_w">1</label> <br />
-    <label id="img_h">2</label>
+    <label id="img_w">w=</label> <br />
+    <label id="img_h">h=</label>
 </div>
 <div>
     <label>Области фильтра</label> <br />
-    <textarea id="filter" cols="40" rows="5">512;512;0;20</textarea><br />
+
+    <textarea id="filter" cols="40" rows="5">512;512;0;0</textarea><br />
+    <label>Формат строки:  <i>x; y; r1; r2</i>    </label> <br /> </br>
     <label>Множетели</label><br />
+    <label>Множитель Фурье-образа</label><input id="fur_mult" type="text" size="40" value="1"></input><br /> </br>
     <label>Удв.  условие фильтра</label><input id="onCodition" type="text" size="40" value="1"></input><br />
     <label>Не удв.  условие фильтра</label><input id="noCodition" type="text" size="40" value="0"><br />
     <input id="btn_send" type="button" value="Загрузить" /><br />
@@ -42,12 +46,27 @@
 
         operation_url = "/Main/LoadImageFur";
 
+        let okrugl = (x) => {
+            //let p = ;
+            return Math.pow(2, Math.ceil(Math.log2(x)));
+        };
+
+        image_opened = () => {
+            let new_width = okrugl(imageWidth);
+            let new_height = okrugl(imageHeight);
+            $('#img_h')[0].innerHTML += " ► " + new_height;
+            $('#img_w')[0].innerHTML += " ► " + new_width;
+            $("#filter").val(new_width / 2 + ";" + new_height / 2 + ";0;0");
+
+        }
+
         send_data = () => {
             let data = new FormData();
             data.append("file", $("#file")[0].files[0]);
             data.append("filter", $("#filter").val());
             data.append("inFilter", $("#onCodition").val());
             data.append("outFilter", $("#noCodition").val());
+            data.append("fur_mult", $("#fur_mult").val());
             return data;
         };
 

@@ -1,16 +1,21 @@
-﻿var timer;
-var bTimer = false;
-var id = -1;
-var operation_url;
+﻿let  timer;
+let bTimer = false;
+let id = -1;
+let operation_url;
 
-var send_data;
-var data_sended;
-var operation_complete;
+let send_data;
+let data_sended;
+let operation_complete;
+let image_opened;
+
+let imageWidth = 0;
+let imageHeight = 0;
+
+
 
 $(document).ready(function () {
     $("#btn_send").click(SendImage);
 });
-
 
 
 function showpreview(input) {
@@ -18,17 +23,37 @@ function showpreview(input) {
     if (input.files && input.files[0]) {
 
         let reader = new FileReader();
-        reader.onload = function (e) {
-            $('#imgpreview').css('visibility', 'visible');
-            $('#imgpreview').attr('src', e.target.result);
-            let img = new Image();
-            img.onload = () => {
-                $('#img_h')[0].innerHTML = img.height;
-                $('#img_w')[0].innerHTML = img.width;
-            }
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(input.files[0]);
+
+        let promise = new Promise((res, rej) => {
+            reader.onload = function (e) {
+                $('#imgpreview').css('visibility', 'visible');
+                $('#imgpreview').attr('src', e.target.result);
+                let img = new Image();
+
+                let promise = new Promise((resolve, reject) => {
+                    img.onload = () => {
+                        $('#img_h')[0].innerHTML = img.height;
+                        $('#img_w')[0].innerHTML = img.width;
+                        imageWidth = img.width;
+                        imageHeight = img.height;
+                        resolve();
+                    }
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                });
+
+                promise.then( () => res() );
+
+                
+            };
+            reader.onerror = rej;
+            reader.readAsDataURL(input.files[0]);
+
+        });
+
+        promise.then(() => { image_opened() });
+
+
     }
 }
 
