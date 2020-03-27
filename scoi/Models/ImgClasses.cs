@@ -13,8 +13,10 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Routing.Template;
 using System.Globalization;
+using System.Threading;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using static System.Environment;
 
 //using Microsoft.EntityFrameworkCore.InMemory.Storage.Internal;
 
@@ -65,9 +67,9 @@ namespace scoi.Models
         }
         public static Bitmap MatrixFilter(JobTask job, Bitmap input, string matrix)
         {
-            job.progress = 0;
+            
 
-            int width = input.Width;
+            int  width = input.Width;
             int height = input.Height;
 
 
@@ -88,46 +90,50 @@ namespace scoi.Models
             int M = core.GetLength(0);
             int N = core.GetLength(1);
 
-
-            for (int _i = 0; _i < height; ++_i)
+            ParallelOptions opt = new ParallelOptions();
+            if (ProcessorCount > 2)
+                opt.MaxDegreeOfParallelism = ProcessorCount - 2;
+            else opt.MaxDegreeOfParallelism = 1;
+            Parallel.For(0, width*height, opt,arr_i =>
             {
+                int _i = arr_i / width;
+                int _j = arr_i - _i * width;
 
-                for (int _j = 0; _j < width; ++_j)
+                double sum1 = 0;
+                double sum2 = 0;
+                double sum3 = 0;
+
+                for (int ii = 0; ii < M; ++ii)   // h - (i - h)     h - i + h = 2h-i
                 {
-                    double sum1 = 0;
-                    double sum2 = 0;
-                    double sum3 = 0;
+                    int i = _i + ii - M / 2;
+                    if (i < 0)
+                        i *= -1;
+                    if (i >= height)
+                        i = 2 * height - i - 1;
 
-                    for (int ii = 0; ii < M; ++ii)   // h - (i - h)     h - i + h = 2h-i
+                    for (int jj = 0; jj < N; ++jj)
                     {
-                        int i = _i + ii - M / 2;
-                        if (i < 0)
-                            i *= -1;
-                        if (i >= height)
-                            i = 2 * height - i - 1;
+                        int j = _j + jj - N / 2;
 
-                        for (int jj = 0; jj < N; ++jj)
-                        {
-                            int j = _j + jj - N / 2;
+                        if (j < 0)
+                            j *= -1;
 
-                            if (j < 0)
-                                j *= -1;
+                        if (j >= width)
+                            j = 2 * width - j - 1;
 
-                            if (j >= width)
-                                j = 2 * width - j - 1;
-
-                            sum1 += old_bytes[width * i * 3 + j * 3 + 0] * core[ii, jj];
-                            sum2 += old_bytes[width * i * 3 + j * 3 + 1] * core[ii, jj];
-                            sum3 += old_bytes[width * i * 3 + j * 3 + 2] * core[ii, jj];
-                        }
+                        sum1 += old_bytes[width * i * 3 + j * 3 + 0] * core[ii, jj];
+                        sum2 += old_bytes[width * i * 3 + j * 3 + 1] * core[ii, jj];
+                        sum3 += old_bytes[width * i * 3 + j * 3 + 2] * core[ii, jj];
                     }
-                    new_bytes[width * _i * 3 + _j * 3 + 0] = clmp(sum1);
-                    new_bytes[width * _i * 3 + _j * 3 + 1] = clmp(sum2);
-                    new_bytes[width * _i * 3 + _j * 3 + 2] = clmp(sum3);
                 }
-                job.progress = (int)Math.Floor(1.0 * _i / height * 100);
-                
-            }
+                new_bytes[arr_i * 3 + 0] = clmp(sum1);
+                new_bytes[arr_i * 3 + 1] = clmp(sum2);
+                new_bytes[arr_i * 3 + 2] = clmp(sum3);
+
+                job.incrementProgress();
+
+            });
+
             Bitmap new_bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
             writeImageBytes(new_bitmap,new_bytes);
      
@@ -135,7 +141,7 @@ namespace scoi.Models
         }
 
         //быстрая функция для нахождения медианы
-        private static (double,int) quickselect((double, int)[] arr, int k)
+        private static (byte,int) quickselect((byte, int)[] arr, int k)
         {
             if (arr.Length == 1)
                 return arr[0];
@@ -156,9 +162,28 @@ namespace scoi.Models
                 return quickselect(high, k - lows.Length - eqv.Length);
             
         }
+
+        class SortedPixel : IComparable
+        {
+            public byte color { set; get; }
+            public int index { set; get; }
+            public (int,int) virtual_position { set; get; }
+            public int CompareTo(object obj)
+            {
+                if (color == (obj as SortedPixel).color) return index.CompareTo((obj as SortedPixel).index) ;
+                return color.CompareTo((obj as SortedPixel).color);
+            }
+
+            public override string ToString()
+            {
+                return $"c={color} i={virtual_position.Item1} j={virtual_position.Item2} ind={index}";
+            }
+        }
         public static Bitmap Median(JobTask job, Bitmap input, int wnd_size)
         {
+            
             job.progress = 0;
+            
 
             int width = input.Width;
             int height = input.Height;
@@ -177,7 +202,195 @@ namespace scoi.Models
             byte[] new_bytes = new byte[width * height * 3];
 
             //массивчик для медианы
-            (double , int )[] M = new (double, int)[wnd_size*wnd_size];
+
+
+            Mutex mutex = new Mutex();
+            int iter_count = old_bytes.Length / 3;
+
+            job.operations_count = height;
+
+            //for (int _i = 0; _i < height; ++_i)
+            ParallelOptions opt = new ParallelOptions();
+            if (ProcessorCount > 2)
+                opt.MaxDegreeOfParallelism = ProcessorCount - 2;
+            else opt.MaxDegreeOfParallelism = 1;
+
+            Parallel.For(0, height, opt, _i =>
+            {
+
+                var curPriority = Thread.CurrentThread.Priority;
+                Thread.CurrentThread.Priority = ThreadPriority.Lowest;
+
+                var sortedSetR = new SortedSet<SortedPixel>();
+                var sortedSetG = new SortedSet<SortedPixel>();
+                var sortedSetB = new SortedSet<SortedPixel>();
+
+                for (int _j = 0; _j < width; ++_j)
+                {
+
+                    if (_j == 0)
+                    {
+                        for (int ii = 0; ii < wnd_size; ++ii) // h - (i - h)     h - i + h = 2h-i
+                        {
+                            int i = _i + ii - wnd_size / 2;
+                            int virtual_i = i;
+                            if (i < 0)
+                                i *= -1 + 1;
+                            if (i >= height)
+                                i = 2 * height - i - 1 - 1;
+
+                            for (int jj = 0; jj < wnd_size; ++jj)
+                            {
+                                int j = _j + jj - wnd_size / 2;
+                                int virtual_j = j;
+                                if (j < 0)
+                                    j *= -1 + 1;
+
+                                if (j >= width)
+                                    j = 2 * width - j - 1 - 1;
+
+                                int index = (virtual_i + wnd_size / 2 + 1) * (width + wnd_size / 2 * 2 + 2) +
+                                            (virtual_j + wnd_size / 2 + 1);
+
+                                sortedSetR.Add(new SortedPixel()
+                                {
+                                    color = old_bytes[i * 3 * width + j * 3 + 0],
+                                    virtual_position = (virtual_i, virtual_j),
+                                    index = index
+                                });
+                                sortedSetG.Add(new SortedPixel()
+                                {
+                                    color = old_bytes[i * 3 * width + j * 3 + 1],
+                                    virtual_position = (virtual_i, virtual_j),
+                                    index = index
+                                });
+                                sortedSetB.Add(new SortedPixel()
+                                {
+                                    color = old_bytes[i * 3 * width + j * 3 + 2],
+                                    virtual_position = (virtual_i, virtual_j),
+                                    index = index
+                                });
+
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (int ii = 0; ii < wnd_size; ++ii) // h - (i - h)     h - i + h = 2h-i
+                        {
+                            int i = _i + ii - wnd_size / 2;
+                            int virtual_i = i;
+                            if (i < 0)
+                                i *= -1 + 1;
+                            if (i >= height)
+                                i = 2 * height - i - 1 - 1;
+
+                            int jj = wnd_size - 1;
+
+                            int j = _j + jj - wnd_size / 2;
+                            int virtual_j = j;
+                            if (j < 0)
+                                j *= -1 + 1;
+
+                            if (j >= width)
+                                j = 2 * width - j - 1 - 1;
+                            int index = (virtual_i + wnd_size / 2 + 1) * (width + wnd_size / 2 * 2 + 2) +
+                                        (virtual_j + wnd_size / 2 + 1);
+
+
+                            sortedSetR.Add(new SortedPixel()
+                            {
+                                color = old_bytes[i * 3 * width + j * 3 + 0],
+                                virtual_position = (virtual_i, virtual_j),
+                                index = index
+                            });
+                            sortedSetG.Add(new SortedPixel()
+                            {
+                                color = old_bytes[i * 3 * width + j * 3 + 1],
+                                virtual_position = (virtual_i, virtual_j),
+                                index = index
+                            });
+                            sortedSetB.Add(new SortedPixel()
+                            {
+                                color = old_bytes[i * 3 * width + j * 3 + 2],
+                                virtual_position = (virtual_i, virtual_j),
+                                index = index
+                            });
+
+
+                        }
+                    }
+
+                    var medR = sortedSetR.ElementAt(sortedSetR.Count / 2).color;
+                    var medG = sortedSetG.ElementAt(sortedSetG.Count / 2).color;
+                    var medB = sortedSetB.ElementAt(sortedSetB.Count / 2).color;
+
+                    sortedSetR.RemoveWhere(x => x.virtual_position.Item2 == _j - wnd_size / 2);
+                    sortedSetG.RemoveWhere(x => x.virtual_position.Item2 == _j - wnd_size / 2);
+                    sortedSetB.RemoveWhere(x => x.virtual_position.Item2 == _j - wnd_size / 2);
+
+
+                    new_bytes[_i * width * 3 + _j * 3 + 0] = medR;
+                    new_bytes[_i * width * 3 + _j * 3 + 1] = medG;
+                    new_bytes[_i * width * 3 + _j * 3 + 2] = medB;
+
+                }
+
+                job.incrementProgress();
+
+                Thread.CurrentThread.Priority = curPriority;
+
+            });
+
+            /*
+            Parallel.For(0, iter_count , arr_i =>
+            {
+                int _i = arr_i / width;
+                int _j = arr_i - _i * width;
+                (byte, int)[] M = new (byte, int)[wnd_size * wnd_size];
+                int sum = 0;
+                for (int color = 0; color < 3; ++color)
+                {
+                    for (int ii = 0; ii < wnd_size; ++ii)   // h - (i - h)     h - i + h = 2h-i
+                    {
+                        int i = _i + ii - wnd_size / 2;
+                        if (i < 0)
+                            i *= -1 + 1;
+                        if (i >= height)
+                            i = 2 * height - i - 1 - 1;
+
+                        for (int jj = 0; jj < wnd_size; ++jj)
+                        {
+                            int j = _j + jj - wnd_size / 2;
+
+                            if (j < 0)
+                                j *= -1 + 1;
+
+                            if (j >= width)
+                                j = 2 * width - j - 1 - 1;
+
+                            M[ii * wnd_size + jj] = (old_bytes[i*width*3+j*3+color], i * width * 3 + j * 3+color);
+                            sum += old_bytes[i * width * 3 + j * 3 + color];
+
+                        }
+                    }
+
+                    var med = quickselect(M, wnd_size * wnd_size / 2).Item2;
+                    //Array.Sort(M, (i1, i2) => i1.Item1.CompareTo(i2.Item1));
+                    // var med = M[wnd_size * wnd_size / 2].Item2;
+
+                    new_bytes[_i*width*3+_j*3+color] = old_bytes[med];
+                }
+
+                job.incrementProgress();
+                
+
+
+            });
+            */
+
+
+            /*
 
             for (int _i = 0; _i < height; ++_i)
             {
@@ -223,6 +436,7 @@ namespace scoi.Models
                 job.progress = (int)Math.Floor(1.0 * _i / height * 100);
 
             }
+            */
             Bitmap new_bitmap = new Bitmap(width, height, PixelFormat.Format24bppRgb);
             writeImageBytes(new_bitmap, new_bytes);
 
@@ -257,9 +471,9 @@ namespace scoi.Models
             byte[] furier_ma_bytes = new byte[new_width * new_height * 3];
             byte[] furier_im_bytes = new byte[new_width * new_height * 3];
 
-            double[] spec_im = new double[new_width * new_height];
-            double[] spec_re = new double[new_width * new_height];
-            double[] spec_ma = new double[new_width * new_height];
+            //double[] spec_im = new double[new_width * new_height];
+            //double[] spec_re = new double[new_width * new_height];
+            //double[] spec_ma = new double[new_width * new_height];
 
 
 
@@ -277,8 +491,8 @@ namespace scoi.Models
             var filter_params_double = filter_params_strings.Select(a=> a.Split(";", ss)
                 .Select(b=>Convert.ToDouble(b.Trim(),cult)).ToArray() ).ToArray();
 
-            
-            job.progress = 0;
+
+            if (job != null) job.operations_count = 6;
 
             
 
@@ -295,7 +509,7 @@ namespace scoi.Models
 
 
                 complex_bytes = FFT.ditfft2d(complex_bytes, new_width, new_height);
-                job.progress += 16;
+                if (job != null) job.incrementProgress();
 
 
                 var max_ma = complex_bytes.Max(x => F( x.Imaginary ) );
@@ -308,12 +522,12 @@ namespace scoi.Models
                         max_ma = Math.Log10(complex_bytes[i].Real + 1.0);
                 }*/
 
-                for (int i = 0; i < new_width * new_height; ++i)
-                {
-                    spec_re[i] += complex_bytes[i].Real * 1.0 / 3.0;
-                    spec_im[i] += complex_bytes[i].Imaginary * 1.0 / 3.0;
-                    spec_ma[i] += complex_bytes[i].Magnitude * 1.0 / 3.0;
-                }
+                //for (int i = 0; i < new_width * new_height; ++i)
+                //{
+                //    spec_re[i] += complex_bytes[i].Real * 1.0 / 3.0;
+                //    spec_im[i] += complex_bytes[i].Imaginary * 1.0 / 3.0;
+                //    spec_ma[i] += complex_bytes[i].Magnitude * 1.0 / 3.0;
+                //}
 
                 var complex_bytes_filtered = complex_bytes.Select((a, i) =>
                 {
@@ -323,7 +537,7 @@ namespace scoi.Models
                     {
                         //if ((x - v[0] * new_width) * (x - v[0] * new_width) + (y - v[1] * new_height) * (y - v[1] * new_height) > v[2] * v[2] * new_height * new_height &&
                         //    (x - v[0] * new_width) * (x - v[0] * new_width) + (y - v[1] * new_height) * (y - v[1] * new_height) <= v[3] * v[3] * new_height * new_height)
-                        if ((x - v[0] ) * (x - v[0] ) + (y - v[1] ) * (y - v[1] ) > v[2] * v[2]   &&
+                        if ((x - v[0] ) * (x - v[0] ) + (y - v[1] ) * (y - v[1] ) >= v[2] * v[2]   &&
                             (x - v[0] ) * (x - v[0] ) + (y - v[1] ) * (y - v[1] ) <= v[3] * v[3])
                             return a*in_filter_zone;
                     }
@@ -341,7 +555,7 @@ namespace scoi.Models
                     //furier_ma_bytes[i * 3 + color] = clmp(furier_multiplyer*Math.Log(complex_bytes[i].Magnitude + 1.0, 100) * 255.0 / max_ma);
                     //furier_ma_bytes[i * 3 + color] = clmp(furier_multiplyer * complex_bytes[i].Magnitude);
                 }
-                job.progress += 16;
+                if (job != null) job.incrementProgress();
             }
 
             //Вывод коэф. преобразования в *.csv
@@ -360,12 +574,13 @@ namespace scoi.Models
            
             //формируем восстановленное изображение
             using Bitmap new_bitmap = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
+            new_bitmap.SetResolution(input.HorizontalResolution, input.VerticalResolution);
             writeImageBytes(new_bitmap,new_bytes);
 
             //рисуем восстановленное изображение на новом, размер которого совпадает с исходным
             //так как размер восстановленного может отличатся (степени двойки)
             Bitmap new_bitamp_ret = new Bitmap(width,height, PixelFormat.Format24bppRgb);
-            new_bitamp_ret.SetResolution(new_bitmap.HorizontalResolution, new_bitmap.VerticalResolution);
+            new_bitamp_ret.SetResolution(input.HorizontalResolution, input.VerticalResolution);
             using (Graphics g1 = Graphics.FromImage(new_bitamp_ret))
             {
                 g1.DrawImageUnscaled(new_bitmap,0,0);
@@ -373,6 +588,7 @@ namespace scoi.Models
 
             //рисуем Фурье-образ и рисуем на нем оверлеи.
             Bitmap new_bitmap_re = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb);
+            new_bitmap_re.SetResolution(input.HorizontalResolution, input.VerticalResolution);
             writeImageBytes(new_bitmap_re, furier_ma_bytes);
             using var g_fur = Graphics.FromImage(new_bitmap_re);
             foreach (var v in filter_params_double)

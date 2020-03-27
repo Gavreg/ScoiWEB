@@ -59,8 +59,12 @@ namespace scoi.Models
         {
             Complex[] X = new Complex[arr.Length];
 
+            ParallelOptions opt = new ParallelOptions();
+            if (Environment.ProcessorCount > 2)
+                opt.MaxDegreeOfParallelism = Environment.ProcessorCount - 2;
+            else opt.MaxDegreeOfParallelism = 1;
             //for (int i = 0; i < height; ++i)
-            Parallel.For(0, height, (i) =>
+            Parallel.For(0, height,opt, i =>
                 {
                     Complex[] tmp = new Complex[width];
                     Array.Copy(arr, i * width, tmp, 0, width);
@@ -71,7 +75,7 @@ namespace scoi.Models
                 }
             );
             //for (int j = 0; j < width; ++j)
-            Parallel.For(0, width, (j) =>
+            Parallel.For(0, width, opt, j =>
                 {
                     Complex[] tmp = new Complex[height];
                     for (int k = 0; k < height; ++k)
@@ -89,8 +93,12 @@ namespace scoi.Models
         {
             Complex[] X = new Complex[arr.Length];
 
+            ParallelOptions opt = new ParallelOptions();
+            if (Environment.ProcessorCount > 2)
+                opt.MaxDegreeOfParallelism = Environment.ProcessorCount - 2;
+            else opt.MaxDegreeOfParallelism = 1;
             //for (int i = 0; i < height; ++i)
-            Parallel.For(0, height, (i) =>
+            Parallel.For(0, height, opt,i =>
                 {
                     Complex[] tmp = new Complex[width];
                     Array.Copy(arr, i * width, tmp, 0, width);
@@ -105,7 +113,7 @@ namespace scoi.Models
             );
 
             //for (int j = 0; j < width; ++j)
-            Parallel.For(0, width, (j) =>
+            Parallel.For(0, width, opt, j =>
                 {
                     Complex[] tmp = new Complex[height];
                     for (int k = 0; k < height; ++k)

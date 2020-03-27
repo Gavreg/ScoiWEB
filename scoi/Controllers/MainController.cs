@@ -67,12 +67,13 @@ namespace scoi.Controllers
 
             jt.action = () =>
             {
-               
+
+                jt.operations_count = img.Height*img.Width;
                 using var newimg = ImageOperations.MatrixFilter(jt, img, data.matr_str);
                 newimg.Save(_hostingEnvironment.WebRootPath + outputName);
 
                 img.Dispose();
-                jt.progress = 100;
+                jt.finalize();
             };
             
             id = dictionary.setTask(jt);
@@ -115,7 +116,7 @@ namespace scoi.Controllers
                     img.Dispose();
                 }
                 
-                jt.progress = 100;
+                jt.finalize();
             };
 
             id = dictionary.setTask(jt);
@@ -148,39 +149,42 @@ namespace scoi.Controllers
             jt.result_file = outputName;
             jt.action = () =>
             {
-                    
+
+                jt.operations_count = 6;
+
                 using var new_img = ImageOperations.BinaryzationAvg(img);
                 new_img.Save(_hostingEnvironment.WebRootPath + outputName);
 
 
-                jt.progress += 16;
+                jt.incrementProgress();
 
                 using var new_img2 =  ImageOperations.BinaryzationOtsu(img);
                 new_img2.Save(_hostingEnvironment.WebRootPath + outputName1);
-               
-                jt.progress += 16;
+
+                jt.incrementProgress();
 
                 using var new_img3 = ImageOperations.BinarizationNiblack(img, data.wndSize, data.sens);
                 new_img3.Save(_hostingEnvironment.WebRootPath + outputName2);
-                jt.progress += 16;
+                jt.incrementProgress();
 
                 using var new_img4 = ImageOperations.BinarizationSauval(img, data.sav_wndSize, data.sav_sens);
                 new_img4.Save(_hostingEnvironment.WebRootPath + outputName3);
-                jt.progress += 16;
+                jt.incrementProgress();
 
                 using var new_img5 = ImageOperations.BinarizationBredly(img, data.bred_wndSize, data.bred_sens);
                 new_img5.Save(_hostingEnvironment.WebRootPath + outputName4);
-                jt.progress += 16;
-                
+                jt.incrementProgress();
+
                 using var new_img6 = ImageOperations.BinarizationWolf(img, data.wolf_wndSize, data.wolf_sens);
                 new_img6.Save(_hostingEnvironment.WebRootPath + outputName5);
-                jt.progress += 16;
+                
+                jt.finalize();
 
 
 
                 img.Dispose();
 
-                jt.progress = 100;
+                
             };
             id = dictionary.setTask(jt);
 
@@ -205,10 +209,12 @@ namespace scoi.Controllers
             jt.result_file = outputName;
             jt.action = () =>
             {
+                
                 using var new_img = ImageOperations.Median(jt,img,data.wnd_size);
                 new_img.Save(_hostingEnvironment.WebRootPath + outputName);
                 img.Dispose();
-                jt.progress = 100;
+                
+                jt.finalize();
 
             };
 

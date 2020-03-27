@@ -6,6 +6,7 @@
 scoi/wwwroot/Files/*.jpg
 scoi/wwwroot/Files/*.png
 scoi/wwwroot/Files/*.tiff
+FFT_test/Out/*
 
 # User-specific files
 *.rsuser
