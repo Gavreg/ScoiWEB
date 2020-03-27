@@ -167,7 +167,9 @@ namespace scoi.Models
         {
             public byte color { set; get; }
             public int index { set; get; }
-            public (int,int) virtual_position { set; get; }
+            //public (int,int) virtual_position { set; get; }
+            public int virtual_column { set; get; }
+
             public int CompareTo(object obj)
             {
                 if (color == (obj as SortedPixel).color) return index.CompareTo((obj as SortedPixel).index) ;
@@ -176,7 +178,7 @@ namespace scoi.Models
 
             public override string ToString()
             {
-                return $"c={color} i={virtual_position.Item1} j={virtual_position.Item2} ind={index}";
+                return $"c={color} j={virtual_column}  ind={index}";
             }
         }
         public static Bitmap Median(JobTask job, Bitmap input, int wnd_size)
@@ -257,19 +259,22 @@ namespace scoi.Models
                                 sortedSetR.Add(new SortedPixel()
                                 {
                                     color = old_bytes[i * 3 * width + j * 3 + 0],
-                                    virtual_position = (virtual_i, virtual_j),
+                                    //virtual_position = (virtual_i, virtual_j),
+                                    virtual_column =  virtual_j,
                                     index = index
                                 });
                                 sortedSetG.Add(new SortedPixel()
                                 {
                                     color = old_bytes[i * 3 * width + j * 3 + 1],
-                                    virtual_position = (virtual_i, virtual_j),
+                                    //virtual_position = (virtual_i, virtual_j),
+                                    virtual_column = virtual_j,
                                     index = index
                                 });
                                 sortedSetB.Add(new SortedPixel()
                                 {
                                     color = old_bytes[i * 3 * width + j * 3 + 2],
-                                    virtual_position = (virtual_i, virtual_j),
+                                    //virtual_position = (virtual_i, virtual_j),
+                                    virtual_column = virtual_j,
                                     index = index
                                 });
 
@@ -303,19 +308,22 @@ namespace scoi.Models
                             sortedSetR.Add(new SortedPixel()
                             {
                                 color = old_bytes[i * 3 * width + j * 3 + 0],
-                                virtual_position = (virtual_i, virtual_j),
+                                //virtual_position = (virtual_i, virtual_j),
+                                virtual_column = virtual_j,
                                 index = index
                             });
                             sortedSetG.Add(new SortedPixel()
                             {
                                 color = old_bytes[i * 3 * width + j * 3 + 1],
-                                virtual_position = (virtual_i, virtual_j),
+                                //virtual_position = (virtual_i, virtual_j),
+                                virtual_column = virtual_j,
                                 index = index
                             });
                             sortedSetB.Add(new SortedPixel()
                             {
                                 color = old_bytes[i * 3 * width + j * 3 + 2],
-                                virtual_position = (virtual_i, virtual_j),
+                                //virtual_position = (virtual_i, virtual_j),
+                                virtual_column = virtual_j,
                                 index = index
                             });
 
@@ -327,9 +335,9 @@ namespace scoi.Models
                     new_bytes[_i * width * 3 + _j * 3 + 1] = sortedSetG.ElementAt(sortedSetG.Count / 2).color;
                     new_bytes[_i * width * 3 + _j * 3 + 2] = sortedSetB.ElementAt(sortedSetB.Count / 2).color;
 
-                    sortedSetR.RemoveWhere(x => x.virtual_position.Item2 == _j - wnd_size / 2);
-                    sortedSetG.RemoveWhere(x => x.virtual_position.Item2 == _j - wnd_size / 2);
-                    sortedSetB.RemoveWhere(x => x.virtual_position.Item2 == _j - wnd_size / 2);
+                    sortedSetR.RemoveWhere(x => x.virtual_column == _j - wnd_size / 2);
+                    sortedSetG.RemoveWhere(x => x.virtual_column == _j - wnd_size / 2);
+                    sortedSetB.RemoveWhere(x => x.virtual_column == _j - wnd_size / 2);
 
 
 
