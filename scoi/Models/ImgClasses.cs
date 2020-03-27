@@ -215,6 +215,8 @@ namespace scoi.Models
                 opt.MaxDegreeOfParallelism = ProcessorCount - 2;
             else opt.MaxDegreeOfParallelism = 1;
 
+            //opt.MaxDegreeOfParallelism = 1;
+
             Parallel.For(0, height, opt, _i =>
             {
 
@@ -321,18 +323,16 @@ namespace scoi.Models
                         }
                     }
 
-                    var medR = sortedSetR.ElementAt(sortedSetR.Count / 2).color;
-                    var medG = sortedSetG.ElementAt(sortedSetG.Count / 2).color;
-                    var medB = sortedSetB.ElementAt(sortedSetB.Count / 2).color;
+                    new_bytes[_i * width * 3 + _j * 3 + 0] = sortedSetR.ElementAt(sortedSetR.Count / 2).color;
+                    new_bytes[_i * width * 3 + _j * 3 + 1] = sortedSetG.ElementAt(sortedSetG.Count / 2).color;
+                    new_bytes[_i * width * 3 + _j * 3 + 2] = sortedSetB.ElementAt(sortedSetB.Count / 2).color;
 
                     sortedSetR.RemoveWhere(x => x.virtual_position.Item2 == _j - wnd_size / 2);
                     sortedSetG.RemoveWhere(x => x.virtual_position.Item2 == _j - wnd_size / 2);
                     sortedSetB.RemoveWhere(x => x.virtual_position.Item2 == _j - wnd_size / 2);
 
 
-                    new_bytes[_i * width * 3 + _j * 3 + 0] = medR;
-                    new_bytes[_i * width * 3 + _j * 3 + 1] = medG;
-                    new_bytes[_i * width * 3 + _j * 3 + 2] = medB;
+
 
                 }
 
