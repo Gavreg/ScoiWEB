@@ -61,7 +61,10 @@ function SendImage() {
     clearTimeout(timer);
     var bTimer = false;
     id = -1;
-    $("#progress").text("");
+
+    document.getElementById("btn_send").disabled = true;
+
+    $("#progress").text("Загрузка...");
     $.ajax({
         url: operation_url,
         type: "post",
@@ -105,6 +108,7 @@ function onTimerProgress() {
 function progressMonitor(data) {
     $("#progress").text(data);
     if (data >= 100) {
+        document.getElementById("btn_send").disabled = false;
         clearTimeout(timer);
         bTimer = false;
         $.ajax({
@@ -116,6 +120,7 @@ function progressMonitor(data) {
         });
         operation_complete();
     } else if (data == -1) {
+        document.getElementById("btn_send").disabled = false;
         clearTimeout(timer);
         bTimer = false;
         $("#opTime").text("Ошибка обработки");

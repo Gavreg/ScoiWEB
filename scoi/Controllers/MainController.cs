@@ -17,6 +17,7 @@ namespace scoi.Controllers
     {
         private readonly IHostingEnvironment _hostingEnvironment;
         private static readonly TaskDictionary dictionary = new TaskDictionary();
+        private static string js_comon_version = "1";
         public MainController(IHostingEnvironment hostingEnvironment)
         {
             _hostingEnvironment = hostingEnvironment;
@@ -25,25 +26,30 @@ namespace scoi.Controllers
 
         public ViewResult Matrix()
         {
+            ViewBag.jsversion = js_comon_version;
             return View();
         }
 
         public ViewResult Fur()
         {
+            ViewBag.jsversion = js_comon_version;
             return View();
         }
 
         public ViewResult Index()
         {
+            ViewBag.jsversion = js_comon_version;
             return View();
         }
 
         public ViewResult Binary()
         {
+            ViewBag.jsversion = js_comon_version;
             return View();
         }
         public ViewResult Median()
         {
+            ViewBag.jsversion = js_comon_version;
             return View();
         }
         [HttpPost]
