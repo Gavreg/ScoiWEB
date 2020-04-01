@@ -457,7 +457,19 @@ namespace scoi.Models
             return Math.Log(x+1);
         }
 
-        public static (Bitmap, Bitmap) Furier(JobTask job,Bitmap input, string filter, double in_filter_zone=1.0, double out_filter_zone=0.0, double furier_multiplyer = 1.0)
+        public static double Butter(double x, double y, double wx,  double n, double dx=0, double dy=0, double G=1.0, double h=0)
+        {
+            return G /( 1 +  Math.Pow( ( (x-dx)*(x-dx) + (y-dy)*(y-dy) -h*h) / (wx * wx),2*n)  );
+        }
+        public static (Bitmap, Bitmap) Furier(
+            JobTask job,
+            Bitmap input, 
+            int filter_type,
+            string filter, 
+            double in_filter_zone=1.0, 
+            double out_filter_zone=0.0, 
+            double furier_multiplyer = 1.0
+            )
         {
             int width = input.Width;
             int height = input.Height;
@@ -477,13 +489,6 @@ namespace scoi.Models
 
             byte[] new_bytes = new byte[new_width * new_height * 3];
             byte[] furier_ma_bytes = new byte[new_width * new_height * 3];
-            byte[] furier_im_bytes = new byte[new_width * new_height * 3];
-
-            //double[] spec_im = new double[new_width * new_height];
-            //double[] spec_re = new double[new_width * new_height];
-            //double[] spec_ma = new double[new_width * new_height];
-
-
 
             using Graphics g = Graphics.FromImage(_tmp);
             g.DrawImageUnscaled(input, 0, 0);
@@ -495,16 +500,36 @@ namespace scoi.Models
             var filter_params_strings = filter.Split("\n", ss);
             filter_params_strings = (from s in filter_params_strings where (s.Trim() != string.Empty) select s).ToArray();
             var cult = new CultureInfo("en-US");
-            
             var filter_params_double = filter_params_strings.Select(a=> a.Split(";", ss)
                 .Select(b=>Convert.ToDouble(b.Trim(),cult)).ToArray() ).ToArray();
 
+            //byte[] test_bytes = new byte[new_width * new_height * 3];
+            //for (int i = 0; i < new_width * new_height; ++i)
+            //{
+            //    byte b = 255;
+            //    var val = filter_params_double.Select(v =>
+            //    {
+            //        int y = i / new_width;
+            //        int x = i - y * new_width;
+            //        double wc = 0.5 * v[3] - 0.5 * v[2];
+            //        double h = v[3] - wc;
+            //        double b = 1-Butter(x, y, wc, 1, v[0], v[1], 1,h);
+            //        return b;
+            //    }).Max();
+            //    test_bytes[i * 3] =clmp( b * val);
+            //    test_bytes[i * 3 + 1] = test_bytes[i * 3 + 2] = test_bytes[i * 3];
+            //}
+
+            //using (Bitmap tb = new Bitmap(new_width, new_height, PixelFormat.Format24bppRgb))
+            //{
+            //    writeImageBytes(tb,test_bytes);
+            //    tb.Save("..\\..\\..\\test.jpg");
+            //}
 
             if (job != null) job.operations_count = 6;
 
-            
-
             Complex[] complex_bytes = new Complex[new_width * new_height];
+            
             for (int color = 0; color <= 2; color++)
             {
                 
@@ -521,36 +546,64 @@ namespace scoi.Models
 
 
                 var max_ma = complex_bytes.Max(x => F( x.Imaginary ) );
-                //var max_im = complex_bytes.Max(x => Math.Log10(x.Imaginary+1.0));
 
-               /* var max_ma = Math.Log10(complex_bytes[1].Real + 1.0);
-                for (int i = 2; i < new_width * height; ++i)
+                Complex[] complex_bytes_filtered;
+
+                if (filter_type == 0) //идеальный
                 {
-                    if (max_ma <  Math.Log10(complex_bytes[i].Real + 1.0))
-                        max_ma = Math.Log10(complex_bytes[i].Real + 1.0);
-                }*/
-
-                //for (int i = 0; i < new_width * new_height; ++i)
-                //{
-                //    spec_re[i] += complex_bytes[i].Real * 1.0 / 3.0;
-                //    spec_im[i] += complex_bytes[i].Imaginary * 1.0 / 3.0;
-                //    spec_ma[i] += complex_bytes[i].Magnitude * 1.0 / 3.0;
-                //}
-
-                var complex_bytes_filtered = complex_bytes.Select((a, i) =>
-                {
-                    int y = i / new_width;
-                    int x = i - y * new_width;
-                    foreach (var v in filter_params_double)
+                    complex_bytes_filtered = complex_bytes.Select((a, i) =>
                     {
-                        //if ((x - v[0] * new_width) * (x - v[0] * new_width) + (y - v[1] * new_height) * (y - v[1] * new_height) > v[2] * v[2] * new_height * new_height &&
-                        //    (x - v[0] * new_width) * (x - v[0] * new_width) + (y - v[1] * new_height) * (y - v[1] * new_height) <= v[3] * v[3] * new_height * new_height)
-                        if ((x - v[0] ) * (x - v[0] ) + (y - v[1] ) * (y - v[1] ) >= v[2] * v[2]   &&
-                            (x - v[0] ) * (x - v[0] ) + (y - v[1] ) * (y - v[1] ) <= v[3] * v[3])
-                            return a*in_filter_zone;
-                    }
-                    return a * out_filter_zone;
-                }).ToArray();
+                        int y = i / new_width;
+                        int x = i - y * new_width;
+                        foreach (var v in filter_params_double)
+                        {
+                            if ((x - v[0]) * (x - v[0]) + (y - v[1]) * (y - v[1]) >= v[2] * v[2] &&
+                                (x - v[0]) * (x - v[0]) + (y - v[1]) * (y - v[1]) <= v[3] * v[3])
+                                return a * in_filter_zone;
+                        }
+                        return a * out_filter_zone;
+
+                    }).ToArray();
+                }
+                else if (filter_type == 1) //Баттерворта ФНЧ
+                {
+                    complex_bytes_filtered = complex_bytes.Select((a, i) =>
+                    {
+                        int y = i / new_width;
+                        int x = i - y * new_width;
+  
+                        var val = filter_params_double.Select(v =>
+                        {
+                            int y = i / new_width;
+                            int x = i - y * new_width;
+                            double wc = 0.5 * v[3] - 0.5 * v[2];
+                            double h = v[3] - wc;
+                            double b = Butter(x, y, wc, (int)out_filter_zone, v[0], v[1], in_filter_zone,h);
+                            return b;
+                        }).Max();
+                        return a * val;
+                    }).ToArray();
+                }
+                else           //Баттерворта ФВЧ
+                {
+                    complex_bytes_filtered = complex_bytes.Select((a, i) =>
+                    {
+                        int y = i / new_width;
+                        int x = i - y * new_width;
+
+                        var val = filter_params_double.Select(v =>
+                        {
+                            int y = i / new_width;
+                            int x = i - y * new_width;
+                            double wc = 0.5 * v[3] - 0.5 * v[2];
+                            double h = v[3] - wc;
+                            double b = in_filter_zone - Butter(x, y, wc, (int)out_filter_zone, v[0], v[1], in_filter_zone,h);
+                            return b;
+                        }).Max();
+                        return a * val;
+                    }).ToArray();
+                }
+
 
                 var complex_bytes_result = FFT.ditifft2d(complex_bytes_filtered, new_width, new_height);
 
@@ -560,8 +613,7 @@ namespace scoi.Models
                     int x = i - y * new_width;
                     new_bytes[i * 3 + color] = clmp(Math.Round( (Math.Pow(-1,x+y) * complex_bytes_result[i]).Real));
                     furier_ma_bytes[i * 3 + color] = clmp(furier_multiplyer * F(complex_bytes[i].Magnitude)*255/max_ma );
-                    //furier_ma_bytes[i * 3 + color] = clmp(furier_multiplyer*Math.Log(complex_bytes[i].Magnitude + 1.0, 100) * 255.0 / max_ma);
-                    //furier_ma_bytes[i * 3 + color] = clmp(furier_multiplyer * complex_bytes[i].Magnitude);
+
                 }
                 if (job != null) job.incrementProgress();
             }

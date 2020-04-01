@@ -45,43 +45,47 @@ namespace FFT_test
             int i = 0;
 
             using var f = new Font("Arial", 20);
+            var (b1, b2) = ImageOperations.Furier(null, b, String.Format("256;256;200;260"));
+            b1.Save("..\\..\\..\\tb1.jpg");
+            b2.Save("..\\..\\..\\tb2.jpg");
+            b1.Dispose();
+            b2.Dispose();
 
-            
-            for (r2 = 0; r2 <= 200; ++r2)
-            { 
-                
-                var (b1, b2) = ImageOperations.Furier(null, b, String.Format("{0};{1};{2};{3}",256,256,r1,r2));
-                using Bitmap newb = new Bitmap(2 * b.Width, b.Height);
-                newb.SetResolution(b.HorizontalResolution, b.VerticalResolution);
-                using Graphics g = Graphics.FromImage(newb);
-                g.DrawImageUnscaled(b1, 0, 0);
-                g.DrawImageUnscaled(b2, b.Width, 0);
-                g.DrawString(String.Format("r1={0}   r2={1}",r1,r2),f,Brushes.GreenYellow, 530,10 );
-                newb.Save("..\\..\\..\\Out\\" + Convert.ToString(i) + ".png");
-                b1.Dispose();
-                b2.Dispose();
-                Console.WriteLine(i);
-                ++i;
-            }
+            //for (r2 = 0; r2 <= 200; ++r2)
+            //{ 
 
-            for (r1 = 1; r1 < 200; ++r1)
-            {
-               
-                var (b1, b2) = ImageOperations.Furier(null, b, String.Format("{0};{1};{2};{3}", 256, 256, r1, r2));
-                using Bitmap newb = new Bitmap(2 * b.Width, b.Height);
-                newb.SetResolution(b.HorizontalResolution, b.VerticalResolution);
-                using Graphics g = Graphics.FromImage(newb);
-                g.DrawImageUnscaled(b1, 0, 0);
-                g.DrawImageUnscaled(b2, b.Width, 0);
-                g.DrawString(String.Format("r1={0}   r2={1}", r1, r2), f, Brushes.GreenYellow, 530, 10);
-                newb.Save("..\\..\\..\\Out\\" + Convert.ToString(i) + ".png");
-                b1.Dispose();
-                b2.Dispose();
-                Console.WriteLine(i);
-                ++i;
-            }
+            //    var (b1, b2) = ImageOperations.Furier(null, b, String.Format("{0};{1};{2};{3}",256,256,r1,r2));
+            //    using Bitmap newb = new Bitmap(2 * b.Width, b.Height);
+            //    newb.SetResolution(b.HorizontalResolution, b.VerticalResolution);
+            //    using Graphics g = Graphics.FromImage(newb);
+            //    g.DrawImageUnscaled(b1, 0, 0);
+            //    g.DrawImageUnscaled(b2, b.Width, 0);
+            //    g.DrawString(String.Format("r1={0}   r2={1}",r1,r2),f,Brushes.GreenYellow, 530,10 );
+            //    newb.Save("..\\..\\..\\Out\\" + Convert.ToString(i) + ".png");
+            //    b1.Dispose();
+            //    b2.Dispose();
+            //    Console.WriteLine(i);
+            //    ++i;
+            //}
 
-    
+            //for (r1 = 1; r1 < 200; ++r1)
+            //{
+
+            //    var (b1, b2) = ImageOperations.Furier(null, b, String.Format("{0};{1};{2};{3}", 256, 256, r1, r2));
+            //    using Bitmap newb = new Bitmap(2 * b.Width, b.Height);
+            //    newb.SetResolution(b.HorizontalResolution, b.VerticalResolution);
+            //    using Graphics g = Graphics.FromImage(newb);
+            //    g.DrawImageUnscaled(b1, 0, 0);
+            //    g.DrawImageUnscaled(b2, b.Width, 0);
+            //    g.DrawString(String.Format("r1={0}   r2={1}", r1, r2), f, Brushes.GreenYellow, 530, 10);
+            //    newb.Save("..\\..\\..\\Out\\" + Convert.ToString(i) + ".png");
+            //    b1.Dispose();
+            //    b2.Dispose();
+            //    Console.WriteLine(i);
+            //    ++i;
+            //}
+
+
 
             /*
             int _h=0;

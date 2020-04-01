@@ -34,12 +34,13 @@ namespace scoi.Models
 
     public class FurierModel
     {
+        public int filter_type {set;get;}
         public IFormFile file { set; get; }
         public string filter { set; get; }
         public double inFilter { set; get; }
         public double outFilter { set; get; }
-
         public double fur_mult { set; get; }
+
 
     }
 }

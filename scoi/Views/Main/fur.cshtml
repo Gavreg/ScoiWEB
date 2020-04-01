@@ -11,19 +11,45 @@
     <img id="imgpreview" src="">
 </div>
 <div>
-    <label id="img_w">w=</label> <br />
-    <label id="img_h">h=</label>
+    <i>(Перемасштабирование изображения для БФП)</i><br/>
+    <label id="img_w">ширина > новая ширина</label> <br />
+    <label id="img_h">высота > новая высота</label> <br /><br />
 </div>
 <div>
-    <label>Области фильтра</label> <br />
+    <select id="filter_type">
+        <option>Идеальный фильтр</option>
+        <option>Фильтр Баттерворта (ФНЧ)</option>
+        <option>Фильтр Баттерворта (ФВЧ)</option>
+    </select> <br /><br />
+    <div id="ideal_params">
+        <b><label>Области фильтра</label> </b><br />
+        <textarea id="filter_ideal" cols="40" rows="5">512;512;0;0</textarea><br />
+        Формат строки: <i>x; y; r1; r2</i> <br />
+        <i>x,y</i> - координаты окружностей в Фурье-образе относительно верхнего левого угла<br />
+        <i>r1</i> - радиус внутренней окружности<br />
+        <i>r2</i> - радиус внешней окружности<br /><br />
+        <b>Множетели</b><br />
+        <label>Множитель Фурье-образа</label><input id="fur_mult_ideal" type="text" size="10" value="1">(не влияет на результат фильтрации)</input><br />
+        <label>Удв. условие фильтра</label><input id="onCodition_ideal" type="text" size="10" value="1"> (для области образа между окружностями [r1 < x < r2])</input><br />
+        <label>Не удв. условие фильтра</label><input id="noCodition_ideal" type="text" size="10" value="0">(для остальной части образа)<br />
+    </div>
 
-    <textarea id="filter" cols="40" rows="5">512;512;0;0</textarea><br />
-    <label>Формат строки:  <i>x; y; r1; r2</i>    </label> <br /> </br>
-    <label>Множетели</label><br />
-    <label>Множитель Фурье-образа</label><input id="fur_mult" type="text" size="40" value="1"></input><br /> </br>
-    <label>Удв.  условие фильтра</label><input id="onCodition" type="text" size="40" value="1"></input><br />
-    <label>Не удв.  условие фильтра</label><input id="noCodition" type="text" size="40" value="0"><br />
+    <div id="bat_params" hidden>
+        <b><label>Области фильтра</label> </b><br />
+        <textarea id="filter_bat" cols="50" rows="5">512;512;0;0</textarea><br />
+        Формат строки: <i>x; y; r1; r2</i> <br />
+        <i>x,y</i> - координаты окружностей в Фурье-образе относительно верхнего левого угла, по которым берется частота среза<br />
+        <i>r1</i> - радиус внутренней окружности<br />
+        <i>r2</i> - радиус внешней окружности (для фильров нижних и высоких частот брать <b><i>r1 = -r2</i></b>)<br /><br />
+        <b>Множетели</b><br />
+        <label>Множитель Фурье-образа</label><input id="fur_mult_bat" type="text" size="10" value="1">(не влияет на результат фильтрации)</input><br />
+        <label>Коэф. усиления</label><input id="gain_bat" type="text" size="10" value="1"> </input><br />
+        <label>Порядок фильтра</label><input id="order_bat" type="text" size="10" value="1"> </input><br />
+
+    </div>
+    <br />
     <input id="btn_send" type="button" value="Загрузить" /><br />
+
 </div>
 <div class="result">
     <h3 id="progress"></h3> <br />
@@ -41,13 +67,27 @@
 
     <script type="text/javascript">
 
+
+        //$('#bat_params').hide();
+
+        let cb = document.getElementById("filter_type");
+        cb.onchange = () => {
+            if (cb.selectedIndex  === 0) {
+                $('#bat_params').hide();
+                $('#ideal_params').show();
+            }
+            else if (cb.selectedIndex  === 1 || cb.selectedIndex  == 2) {
+                $('#ideal_params').hide();
+                $('#bat_params').show();
+            }
+        };
+
         let imagename1 = "";
         let imagename2 = "";
 
         operation_url = "/Main/LoadImageFur";
 
         let okrugl = (x) => {
-            //let p = ;
             return Math.pow(2, Math.ceil(Math.log2(x)));
         };
 
@@ -56,17 +96,31 @@
             let new_height = okrugl(imageHeight);
             $('#img_h')[0].innerHTML += " ► " + new_height;
             $('#img_w')[0].innerHTML += " ► " + new_width;
-            $("#filter").val(new_width / 2 + ";" + new_height / 2 + ";0;0");
+            $("#filter_ideal").val(new_width / 2 + ";" + new_height / 2 + ";0;10");
+            $("#filter_bat").val(new_width / 2 + ";" + new_height / 2 + ";-10;10;1");
 
         }
 
         send_data = () => {
             let data = new FormData();
+
             data.append("file", $("#file")[0].files[0]);
-            data.append("filter", $("#filter").val());
-            data.append("inFilter", $("#onCodition").val());
-            data.append("outFilter", $("#noCodition").val());
-            data.append("fur_mult", $("#fur_mult").val());
+            data.append("filter_type",cb.selectedIndex);
+
+            if (cb.selectedIndex === 0) {
+                data.append("filter", $("#filter_ideal").val());
+                data.append("inFilter", $("#onCodition_ideal").val());
+                data.append("outFilter", $("#noCodition_ideal").val());
+                data.append("fur_mult", $("#fur_mult_ideal").val());
+            }
+            else if (cb.selectedIndex  === 1 || cb.selectedIndex  == 2) {
+                data.append("filter", $("#filter_bat").val());
+                data.append("inFilter", $("#gain_bat").val());
+                data.append("outFilter", $("#order_bat").val());
+                data.append("fur_mult", $("#fur_mult_bat").val());
+            }
+
+
             return data;
         };
 
