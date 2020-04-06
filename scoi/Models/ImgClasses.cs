@@ -29,6 +29,7 @@ namespace scoi.Models
 
 
         
+
         static double[,]  getCoreFromStr(string matrix)
         {
             char[] splitter = { '\n' };
@@ -1235,7 +1236,7 @@ namespace scoi.Models
             return img_ret;
 
         }
-        static byte[] getImgBytes(Bitmap img)
+        public static byte[] getImgBytes(Bitmap img)
         {
             byte[] bytes = new byte[img.Width * img.Height * 3];  //выделяем память под массив байтов
             

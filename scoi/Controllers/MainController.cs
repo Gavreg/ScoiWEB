@@ -10,17 +10,19 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Hosting;
 using scoi.Models;
 using System.IO;
+using System.Text.Json;
+using System.Text;
 
 namespace scoi.Controllers
 {
     public class MainController : Controller
     {
-        private readonly IHostingEnvironment _hostingEnvironment;
+        private readonly IWebHostEnvironment _hostingEnvironment;
         private static readonly TaskDictionary dictionary = new TaskDictionary();
         private static string js_comon_version = "1";
-        public MainController(IHostingEnvironment hostingEnvironment)
+        public MainController(IWebHostEnvironment hostingEnvironment)
         {
-            _hostingEnvironment = hostingEnvironment;
+            _hostingEnvironment = hostingEnvironment ?? throw new ArgumentNullException(nameof(hostingEnvironment));
             Thread.CurrentThread.CurrentCulture = new CultureInfo("es-Us");
         }
 
@@ -67,22 +69,28 @@ namespace scoi.Controllers
                 img = new Bitmap(stream);
             }
 
-            var newFn = Path.GetRandomFileName() + Path.GetRandomFileName();
-            var outputName = "\\Files\\" + newFn + ".jpg"; //+extension;
-            jt.result_file = outputName;
+            var dir = $"\\Files\\Results\\Matrix\\{ImageSaveHelper.getOrCreateImageDir(_hostingEnvironment.WebRootPath + "\\Files\\Results\\Matrix", img)}";
 
+            var outputName = Path.GetRandomFileName();
+            
             jt.action = () =>
             {
                 jt.operations_count = img.Height*img.Width;
                 using var newimg = ImageOperations.MatrixFilter(jt, img, data.matr_str);
-                newimg.Save(_hostingEnvironment.WebRootPath + outputName);
+                
+                newimg.Save($"{_hostingEnvironment.WebRootPath}\\{dir}\\{outputName}_result.jpg");
+                
+                string json = JsonSerializer.Serialize(data);
+                FileStream fs = new FileStream($"{_hostingEnvironment.WebRootPath}\\{dir}\\{outputName}.txt", FileMode.OpenOrCreate);
+                fs.Write(Encoding.ASCII.GetBytes(json));
+                fs.Close();
 
                 img.Dispose();
                 jt.finalize();
             };
-            
             id = dictionary.setTask(jt);
-            return id.ToString() + ':' + outputName;
+            
+            return $"{id}:{dir}\\{outputName}_result.jpg";
         }
 
         [HttpPost]
@@ -100,8 +108,14 @@ namespace scoi.Controllers
                 img = new Bitmap(stream);
             }
 
-            var outputName1 = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
-            var outputName2 = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
+
+
+            var dir = $"\\Files\\Results\\Furier\\{ImageSaveHelper.getOrCreateImageDir(_hostingEnvironment.WebRootPath + "\\Files\\Results\\Furier", img)}";
+            var random_name = Path.GetRandomFileName();
+
+            var outputName1 = $"{dir}\\{random_name}_result.jpg"; //+extension;
+            var outputName2 = $"{dir}\\{random_name}_furier.jpg"; ; //+extension;
+            var paramName  =  $"{dir}\\{random_name}.txt"; ; //+extension;
 
             //jt.result_file = outputName;
 
@@ -111,8 +125,14 @@ namespace scoi.Controllers
                 try
                 {
                     (img1, img2) = ImageOperations.Furier(jt, img, data.filter_type, data.filter, data.inFilter, data.outFilter,data.fur_mult);
-                    img1.Save(_hostingEnvironment.WebRootPath + outputName1);
-                    img2.Save(_hostingEnvironment.WebRootPath + outputName2);
+                    img1.Save($"{_hostingEnvironment.WebRootPath}\\{outputName1}");
+                    img2.Save($"{_hostingEnvironment.WebRootPath}\\{outputName2}");
+                    
+                    string json = JsonSerializer.Serialize(data);
+                    FileStream fs = new FileStream($"{_hostingEnvironment.WebRootPath}\\{paramName}", FileMode.OpenOrCreate);
+                    fs.Write(Encoding.ASCII.GetBytes(json));
+                    fs.Close();
+
                 }
                 finally
                 {
@@ -143,8 +163,11 @@ namespace scoi.Controllers
                 img = new Bitmap(stream);
             }
 
-            
-            var outputName = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
+            var dir = $"\\Files\\Results\\Binarization\\{ImageSaveHelper.getOrCreateImageDir(_hostingEnvironment.WebRootPath + "\\Files\\Results\\Binarization", img)}";
+
+            var random_name = Path.GetRandomFileName();
+
+            var outputName =  "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
             var outputName1 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
             var outputName2 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
             var outputName3 = "\\Files\\" + Path.GetRandomFileName() + ".tiff"; //+extension;
@@ -158,31 +181,36 @@ namespace scoi.Controllers
                 jt.operations_count = 6;
 
                 using var new_img = ImageOperations.BinaryzationAvg(img);
-                new_img.Save(_hostingEnvironment.WebRootPath + outputName);
+                new_img.Save($"{_hostingEnvironment.WebRootPath}\\{dir}\\{random_name}_avg.tiff");
 
 
                 jt.incrementProgress();
 
                 using var new_img2 =  ImageOperations.BinaryzationOtsu(img);
-                new_img2.Save(_hostingEnvironment.WebRootPath + outputName1);
+                new_img2.Save($"{_hostingEnvironment.WebRootPath}\\{dir}\\{random_name}_otsu.tiff");
 
                 jt.incrementProgress();
 
                 using var new_img3 = ImageOperations.BinarizationNiblack(img, data.wndSize, data.sens);
-                new_img3.Save(_hostingEnvironment.WebRootPath + outputName2);
+                new_img3.Save($"{_hostingEnvironment.WebRootPath}\\{dir}\\{random_name}_niblack.tiff");
                 jt.incrementProgress();
 
                 using var new_img4 = ImageOperations.BinarizationSauval(img, data.sav_wndSize, data.sav_sens);
-                new_img4.Save(_hostingEnvironment.WebRootPath + outputName3);
+                new_img4.Save($"{_hostingEnvironment.WebRootPath}\\{dir}\\{random_name}_sauval.tiff");
                 jt.incrementProgress();
 
                 using var new_img5 = ImageOperations.BinarizationBredly(img, data.bred_wndSize, data.bred_sens);
-                new_img5.Save(_hostingEnvironment.WebRootPath + outputName4);
+                new_img5.Save($"{_hostingEnvironment.WebRootPath}\\{dir}\\{random_name}_bredly.tiff");
                 jt.incrementProgress();
 
                 using var new_img6 = ImageOperations.BinarizationWolf(img, data.wolf_wndSize, data.wolf_sens);
-                new_img6.Save(_hostingEnvironment.WebRootPath + outputName5);
-                
+                new_img6.Save($"{_hostingEnvironment.WebRootPath}\\{dir}\\{random_name}_woolf.tiff");
+
+                string json = JsonSerializer.Serialize(data);
+                FileStream fs = new FileStream($"{_hostingEnvironment.WebRootPath}\\{dir}\\{random_name}.txt", FileMode.OpenOrCreate);
+                fs.Write(Encoding.ASCII.GetBytes(json));
+                fs.Close();
+
                 jt.finalize();
 
 
@@ -193,7 +221,13 @@ namespace scoi.Controllers
             };
             id = dictionary.setTask(jt);
 
-            return id.ToString() + ':' + outputName + ':' + outputName1+ ":" + outputName2 + ":" + outputName3 + ":" + outputName4 + ":" + outputName5;
+            return id.ToString() + ':' +
+                   $"{dir}\\{random_name}_avg.tiff" + ':' +
+                   $"{dir}\\{random_name}_otsu.tiff" + ":" +
+                   $"{dir}\\{random_name}_niblack.tiff" + ":" +
+                   $"{dir}\\{random_name}_sauval.tiff" + ":" +
+                   $"{dir}\\{random_name}_bredly.tiff" + ":" +
+                   $"{dir}\\{random_name}_woolf.tiff";
         }
 
         [HttpPost]
@@ -208,17 +242,26 @@ namespace scoi.Controllers
             
             await data.file.CopyToAsync(stream);
             Bitmap img = new Bitmap(stream);
-            
-            var outputName = "\\Files\\" + Path.GetRandomFileName() + ".jpg"; //+extension;
+
+            var dir = $"\\Files\\Results\\Median\\{ImageSaveHelper.getOrCreateImageDir(_hostingEnvironment.WebRootPath + "\\Files\\Results\\Median", img)}";
+            var random_name = Path.GetRandomFileName();
+
+            var outputName = $"{dir}\\{random_name}_result.jpg"; //+extension;
+            var paramName = $"{dir}\\{random_name}.txt"; ; //+extension;
 
             jt.result_file = outputName;
             jt.action = () =>
             {
                 
                 using var new_img = ImageOperations.Median(jt,img,data.wnd_size);
-                new_img.Save(_hostingEnvironment.WebRootPath + outputName);
+                new_img.Save($"{_hostingEnvironment.WebRootPath}\\{outputName}");
                 img.Dispose();
-                
+
+                string json = JsonSerializer.Serialize(data);
+                FileStream fs = new FileStream($"{_hostingEnvironment.WebRootPath}\\{paramName}", FileMode.OpenOrCreate);
+                fs.Write(Encoding.ASCII.GetBytes(json));
+                fs.Close();
+
                 jt.finalize();
 
             };

@@ -6,6 +6,7 @@
 scoi/wwwroot/Files/*.jpg
 scoi/wwwroot/Files/*.png
 scoi/wwwroot/Files/*.tiff
+scoi/wwwroot/Files/Results/*
 FFT_test/Out/*
 
 # User-specific files
