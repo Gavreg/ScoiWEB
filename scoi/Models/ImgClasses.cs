@@ -17,6 +17,7 @@ using System.Threading;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using static System.Environment;
+using SpatialFiltering;
 
 //using Microsoft.EntityFrameworkCore.InMemory.Storage.Internal;
 
@@ -143,7 +144,7 @@ namespace scoi.Models
         }
 
         //быстрая функция для нахождения медианы
-        private static (byte,int) quickselect((byte, int)[] arr, int k)
+        private static int quickselect(int[] arr, int k)
         {
             if (arr.Length == 1)
                 return arr[0];
@@ -152,9 +153,9 @@ namespace scoi.Models
             int pivot = r.Next(arr.Length);
             //int pivot = 0;
 
-            var lows = arr.Where(x => x.Item1  < arr[pivot].Item1).ToArray();
-            var high = arr.Where(x => x.Item1  > arr[pivot].Item1).ToArray();
-            var eqv  = arr.Where(x => x.Item1 == arr[pivot].Item1).ToArray();
+            var lows = arr.Where(x => x  < arr[pivot]).ToArray();
+            var high = arr.Where(x => x  > arr[pivot]).ToArray();
+            var eqv  = arr.Where(x => x == arr[pivot]).ToArray();
 
             if (k < lows.Length)
                 return quickselect(lows, k);
@@ -165,23 +166,48 @@ namespace scoi.Models
             
         }
 
-        class SortedPixel : IComparable
+        //более быстрый вариант квиксорта, без создания доп. массивов.
+        private static int quickselect2(int[] arr,  int left, int right, int k)
         {
-            public byte color { set; get; }
-            public int index { set; get; }
-            //public (int,int) virtual_position { set; get; }
-            public int virtual_column { set; get; }
+            if (right - left == 1)
+                return arr[left];
 
-            public int CompareTo(object obj)
-            {
-                if (color == (obj as SortedPixel).color) return index.CompareTo((obj as SortedPixel).index) ;
-                return color.CompareTo((obj as SortedPixel).color);
-            }
+            int left_count=0;
+            int eqv_count=0;
+            int tmp=0;
 
-            public override string ToString()
+            for (int i = left; i < right - 1; ++i)
             {
-                return $"c={color} j={virtual_column}  ind={index}";
+                if (arr[i] < arr[right - 1])
+                {
+                    tmp = arr[i];
+                    arr[i] = arr[left + left_count];
+                    arr[left + left_count] = tmp;
+                    left_count++;
+                }
             }
+            for (int i = left + left_count; i < right - 1; ++i)
+            {
+                if (arr[i] == arr[right - 1])
+                {
+                    tmp = arr[i];
+                    arr[i] = arr[left + left_count + eqv_count];
+                    arr[left + left_count + eqv_count] = tmp;
+                    eqv_count++;
+                }
+            }
+            tmp = arr[right-1];
+            arr[right - 1] = arr[left + left_count + eqv_count];
+            arr[left + left_count + eqv_count] = tmp;
+
+
+            if (k < left_count)
+                return quickselect2(arr, left, left+left_count, k );
+            else if (k < left_count + eqv_count)
+                return arr[left + left_count];
+            else
+                return quickselect2(arr,left+left_count+eqv_count,right, k  - left_count - eqv_count);
+
         }
         public static Bitmap Median(JobTask job, Bitmap input, int wnd_size)
         {
@@ -219,132 +245,62 @@ namespace scoi.Models
 
             //opt.MaxDegreeOfParallelism = 1;
 
-            Parallel.For(0, height, opt, _i =>
+            //Parallel.For(0, height, opt, _i =>
+            for (int _i = 0; _i< height; ++_i)
             {
 
                 var curPriority = Thread.CurrentThread.Priority;
                 Thread.CurrentThread.Priority = ThreadPriority.Lowest;
 
-                var sortedSetR = new SortedSet<SortedPixel>();
-                var sortedSetG = new SortedSet<SortedPixel>();
-                var sortedSetB = new SortedSet<SortedPixel>();
+                int[] wndR = new int[wnd_size * wnd_size];
+                int[] wndG = new int[wnd_size * wnd_size];
+                int[] wndB = new int[wnd_size * wnd_size];
 
                 for (int _j = 0; _j < width; ++_j)
                 {
 
-                    if (_j == 0)
+                    for (int ii = 0; ii < wnd_size; ++ii) // h - (i - h)     h - i + h = 2h-i
                     {
-                        for (int ii = 0; ii < wnd_size; ++ii) // h - (i - h)     h - i + h = 2h-i
+                        for (int jj = 0; jj < wnd_size; ++jj)
                         {
                             int i = _i + ii - wnd_size / 2;
-                            int virtual_i = i;
+
                             if (i < 0)
-                                i *= -1 + 1;
+                                i *= -1;
                             if (i >= height)
-                                i = 2 * height - i - 1 - 1;
-
-                            for (int jj = 0; jj < wnd_size; ++jj)
-                            {
-                                int j = _j + jj - wnd_size / 2;
-                                int virtual_j = j;
-                                if (j < 0)
-                                    j *= -1 + 1;
-
-                                if (j >= width)
-                                    j = 2 * width - j - 1 - 1;
-
-                                int index = (virtual_i + wnd_size / 2 + 1) * (width + wnd_size / 2 * 2 + 2) +
-                                            (virtual_j + wnd_size / 2 + 1);
-
-                                sortedSetR.Add(new SortedPixel()
-                                {
-                                    color = old_bytes[i * 3 * width + j * 3 + 0],
-                                    //virtual_position = (virtual_i, virtual_j),
-                                    virtual_column =  virtual_j,
-                                    index = index
-                                });
-                                sortedSetG.Add(new SortedPixel()
-                                {
-                                    color = old_bytes[i * 3 * width + j * 3 + 1],
-                                    //virtual_position = (virtual_i, virtual_j),
-                                    virtual_column = virtual_j,
-                                    index = index
-                                });
-                                sortedSetB.Add(new SortedPixel()
-                                {
-                                    color = old_bytes[i * 3 * width + j * 3 + 2],
-                                    //virtual_position = (virtual_i, virtual_j),
-                                    virtual_column = virtual_j,
-                                    index = index
-                                });
-
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (int ii = 0; ii < wnd_size; ++ii) // h - (i - h)     h - i + h = 2h-i
-                        {
-                            int i = _i + ii - wnd_size / 2;
-                            int virtual_i = i;
-                            if (i < 0)
-                                i *= -1 + 1;
-                            if (i >= height)
-                                i = 2 * height - i - 1 - 1;
-
-                            int jj = wnd_size - 1;
+                                i = 2 * height - i - 1;
 
                             int j = _j + jj - wnd_size / 2;
-                            int virtual_j = j;
                             if (j < 0)
-                                j *= -1 + 1;
-
+                                j *= -1;
                             if (j >= width)
-                                j = 2 * width - j - 1 - 1;
-                            int index = (virtual_i + wnd_size / 2 + 1) * (width + wnd_size / 2 * 2 + 2) +
-                                        (virtual_j + wnd_size / 2 + 1);
+                                j = 2 * width - j - 1;
 
-
-                            sortedSetR.Add(new SortedPixel()
-                            {
-                                color = old_bytes[i * 3 * width + j * 3 + 0],
-                                //virtual_position = (virtual_i, virtual_j),
-                                virtual_column = virtual_j,
-                                index = index
-                            });
-                            sortedSetG.Add(new SortedPixel()
-                            {
-                                color = old_bytes[i * 3 * width + j * 3 + 1],
-                                //virtual_position = (virtual_i, virtual_j),
-                                virtual_column = virtual_j,
-                                index = index
-                            });
-                            sortedSetB.Add(new SortedPixel()
-                            {
-                                color = old_bytes[i * 3 * width + j * 3 + 2],
-                                //virtual_position = (virtual_i, virtual_j),
-                                virtual_column = virtual_j,
-                                index = index
-                            });
-
-
+                            wndR[ii * wnd_size + jj] = old_bytes[i * width * 3 + j * 3 + 0];
+                            wndG[ii * wnd_size + jj] = old_bytes[i * width * 3 + j * 3 + 1];
+                            wndB[ii * wnd_size + jj] = old_bytes[i * width * 3 + j * 3 + 2];
                         }
                     }
 
-                    new_bytes[_i * width * 3 + _j * 3 + 0] = sortedSetR.ElementAt(sortedSetR.Count / 2).color;
-                    new_bytes[_i * width * 3 + _j * 3 + 1] = sortedSetG.ElementAt(sortedSetG.Count / 2).color;
-                    new_bytes[_i * width * 3 + _j * 3 + 2] = sortedSetB.ElementAt(sortedSetB.Count / 2).color;
+                    //new_bytes[_i * width * 3 + _j * 3 + 0] = (byte)QuickSelect.kthSmallest(wndR, 0, wndR.Length - 1, wnd_size * wnd_size / 2 - 1); 
+                    //new_bytes[_i * width * 3 + _j * 3 + 1] = (byte)QuickSelect.kthSmallest(wndG, 0, wndG.Length - 1, wnd_size * wnd_size / 2 - 1); ;
+                    //new_bytes[_i * width * 3 + _j * 3 + 2] = (byte)QuickSelect.kthSmallest(wndB, 0, wndB.Length - 1, wnd_size * wnd_size / 2 - 1); ;
+                   
+                    //new_bytes[_i * width * 3 + _j * 3 + 0] = (byte)quickselect(wndR, wnd_size * wnd_size / 2);
+                    //new_bytes[_i * width * 3 + _j * 3 + 1] = (byte)quickselect(wndG, wnd_size * wnd_size / 2);
+                    //new_bytes[_i * width * 3 + _j * 3 + 2] = (byte)quickselect(wndB, wnd_size * wnd_size / 2);
 
-                    sortedSetR.RemoveWhere(x => x.virtual_column == _j - wnd_size / 2);
-                    sortedSetG.RemoveWhere(x => x.virtual_column == _j - wnd_size / 2);
-                    sortedSetB.RemoveWhere(x => x.virtual_column == _j - wnd_size / 2);
+                    new_bytes[_i * width * 3 + _j * 3 + 0] = (byte)quickselect2(wndR, 0,  wnd_size * wnd_size, wnd_size * wnd_size / 2);
+                    new_bytes[_i * width * 3 + _j * 3 + 1] = (byte)quickselect2(wndG, 0, wnd_size * wnd_size, wnd_size * wnd_size / 2);
+                    new_bytes[_i * width * 3 + _j * 3 + 2] = (byte)quickselect2(wndB, 0, wnd_size * wnd_size, wnd_size * wnd_size / 2);
+
 
                 }
 
                 job.incrementProgress();
                 Thread.CurrentThread.Priority = curPriority;
 
-            });
+            }//);
 
             /*
             Parallel.For(0, iter_count , arr_i =>
