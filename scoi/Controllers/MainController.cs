@@ -115,19 +115,21 @@ namespace scoi.Controllers
 
             var outputName1 = $"{dir}\\{random_name}_result.jpg"; //+extension;
             var outputName2 = $"{dir}\\{random_name}_furier.jpg"; ; //+extension;
+            var outputName3 = $"{dir}\\{random_name}_mask.jpg"; ; //+extension;
             var paramName  =  $"{dir}\\{random_name}.txt"; ; //+extension;
 
             //jt.result_file = outputName;
 
             jt.action = () =>
             {
-                Bitmap img1=null, img2=null;
+                Bitmap img1=null, img2=null, img3 = null;
                 try
                 {
-                    (img1, img2) = ImageOperations.Furier(jt, img, data.filter_type, data.filter, data.inFilter, data.outFilter,data.fur_mult);
+                    (img1, img2, img3) = ImageOperations.Furier(jt, img, data.filter_type, data.filter, data.inFilter, data.outFilter,data.fur_mult);
                     img1.Save($"{_hostingEnvironment.WebRootPath}\\{outputName1}");
                     img2.Save($"{_hostingEnvironment.WebRootPath}\\{outputName2}");
-                    
+                    img3.Save($"{_hostingEnvironment.WebRootPath}\\{outputName3}");
+
                     string json = JsonSerializer.Serialize(data);
                     FileStream fs = new FileStream($"{_hostingEnvironment.WebRootPath}\\{paramName}", FileMode.OpenOrCreate);
                     fs.Write(Encoding.ASCII.GetBytes(json));
@@ -145,7 +147,7 @@ namespace scoi.Controllers
             };
 
             id = dictionary.setTask(jt);
-            return id.ToString() + ':' + outputName1 + ':' + outputName2;
+            return id.ToString() + ':' + outputName1 + ':' + outputName2 + ':' + outputName3;
         }
 
         [HttpPost]

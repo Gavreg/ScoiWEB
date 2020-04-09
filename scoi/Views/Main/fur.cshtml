@@ -21,7 +21,10 @@
         <option>Идеальный фильтр</option>
         <option>Фильтр Баттерворта (ФНЧ)</option>
         <option>Фильтр Баттерворта (ФВЧ)</option>
+        <option>Фильтр Гаусса (ФНЧ)</option>
+        <option>Фильтр Гаусса (ФВЧ)</option>
     </select> <br /><br />
+
     <div id="ideal_params">
         <b><label>Области фильтра</label> </b><br />
         <textarea id="filter_ideal" cols="40" rows="5">512;512;0;0</textarea><br />
@@ -45,9 +48,21 @@
         <b>Множетели</b><br />
         <label>Множитель Фурье-образа</label><input id="fur_mult_bat" type="text" size="10" value="1">(не влияет на результат фильтрации)</input><br />
         <label>Коэф. усиления</label><input id="gain_bat" type="text" size="10" value="1"> </input><br />
-        <label>Порядок фильтра</label><input id="order_bat" type="text" size="10" value="1"> </input><br />
-
+        <label>Порядок фильтра</label><input id="order_bat" type="text" size="10" value="2"> </input><br />
     </div>
+
+    <div id="gau_params" hidden>
+        <b><label>Области фильтра</label> </b><br />
+        <textarea id="filter_gau" cols="50" rows="5">512;512;0;0</textarea><br />
+        Формат строки: <i>x; y; r1; r2</i> <br />
+        <i>x,y</i> - координаты окружностей в Фурье-образе относительно верхнего левого угла, по которым берется частота среза<br />
+        <i>r1</i> - радиус внутренней окружности<br />
+        <i>r2</i> - радиус внешней окружности (для фильров нижних и высоких частот брать <b><i>r1 = -r2</i></b>)<br /><br />
+        <b>Множетели</b><br />
+        <label>Множитель Фурье-образа</label><input id="fur_mult_gau" type="text" size="10" value="1">(не влияет на результат фильтрации)</input><br />
+        <label>Коэф. усиления</label><input id="gain_gau" type="text" size="10" value="1"> </input><br />
+    </div>
+
     <br />
     <input id="btn_send" type="button" value="Загрузить" /><br />
 
@@ -55,8 +70,23 @@
 <div class="result">
     <h3 id="progress"></h3> <br />
     <h3 id="opTime"></h3><br />
-    <img id="resultimg1" src="" />
-    <img id="resultimg2" src="" />
+                         <div class="result_img">
+                             <div class="result_element">
+                                 <h3>Восстановленное изображение</h3> <br/>
+                                 <img id="resultimg1" src="" />
+                             </div>
+                             <div class="result_element">
+                                 <h3>Фурье-образ</h3><br />
+                                 <img id="resultimg2" src="" />
+                             </div>
+                             <div class="result_element">
+                                 <h3>Фильтр (передаточная функция)</h3><br />
+                                 <img id="resultimg3" src="" />
+                             </div>
+                         </div>
+   
+    
+    
 
 </div>
 
@@ -73,18 +103,24 @@
 
         let cb = document.getElementById("filter_type");
         cb.onchange = () => {
-            if (cb.selectedIndex  === 0) {
-                $('#bat_params').hide();
+            $('#bat_params').hide();
+            $('#gau_params').hide();
+            $('#ideal_params').hide();
+
+            if (cb.selectedIndex === 0) {
                 $('#ideal_params').show();
             }
-            else if (cb.selectedIndex  === 1 || cb.selectedIndex  == 2) {
-                $('#ideal_params').hide();
+            else if (cb.selectedIndex  === 1 || cb.selectedIndex  === 2) {
                 $('#bat_params').show();
+            }
+            else if (cb.selectedIndex  === 3 || cb.selectedIndex  === 4) {
+                $('#gau_params').show();
             }
         };
 
         let imagename1 = "";
         let imagename2 = "";
+        let imagename3 = "";
 
         operation_url = "/Main/LoadImageFur";
 
@@ -98,7 +134,8 @@
             $('#img_h')[0].innerHTML += " ► " + new_height;
             $('#img_w')[0].innerHTML += " ► " + new_width;
             $("#filter_ideal").val(new_width / 2 + ";" + new_height / 2 + ";0;10");
-            $("#filter_bat").val(new_width / 2 + ";" + new_height / 2 + ";-10;10;1");
+            $("#filter_bat").val(new_width / 2 + ";" + new_height / 2 + ";-10;10");
+            $("#filter_gau").val(new_width / 2 + ";" + new_height / 2 + ";-10;10");
 
         }
 
@@ -114,11 +151,15 @@
                 data.append("outFilter", $("#noCodition_ideal").val());
                 data.append("fur_mult", $("#fur_mult_ideal").val());
             }
-            else if (cb.selectedIndex  === 1 || cb.selectedIndex  == 2) {
+            else if (cb.selectedIndex === 1 || cb.selectedIndex == 2) {
                 data.append("filter", $("#filter_bat").val());
                 data.append("inFilter", $("#gain_bat").val());
                 data.append("outFilter", $("#order_bat").val());
                 data.append("fur_mult", $("#fur_mult_bat").val());
+            } else if (cb.selectedIndex === 3 || cb.selectedIndex == 4) {
+                data.append("filter", $("#filter_gau").val());
+                data.append("inFilter", $("#gain_gau").val());
+                data.append("fur_mult", $("#fur_mult_gau").val());
             }
 
 
@@ -129,11 +170,13 @@
             let string_arr = respond.split(":");
             imagename1 = string_arr[0];
             imagename2 = string_arr[1];
+            imagename3 = string_arr[2];
         }
 
         operation_complete = () => {
             $("#resultimg1").attr("src", imagename1);
             $("#resultimg2").attr("src", imagename2);
+            $("#resultimg3").attr("src", imagename3);
         }
 
 
