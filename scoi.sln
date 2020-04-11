@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "scoi", "scoi\scoi.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFT_test", "FFT_test\FFT_test.csproj", "{448C0142-7F51-4085-8CF1-672527FD4343}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FFT_image_filtering", "FFT_image_filtering\FFT_image_filtering.csproj", "{4D891C56-1395-4088-B47D-96C66E38859C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{448C0142-7F51-4085-8CF1-672527FD4343}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{448C0142-7F51-4085-8CF1-672527FD4343}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{448C0142-7F51-4085-8CF1-672527FD4343}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D891C56-1395-4088-B47D-96C66E38859C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D891C56-1395-4088-B47D-96C66E38859C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D891C56-1395-4088-B47D-96C66E38859C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D891C56-1395-4088-B47D-96C66E38859C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
