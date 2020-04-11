@@ -3,6 +3,20 @@
     ViewData["Title"] = "fur";
 }
 
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6">
+
+</script>
+<script id="MathJax-script" async
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+
+</script>
+<style>
+    h3 {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+</style>
+
 <h1>Частотная фильтрация</h1>
 
 Изображение:
@@ -11,82 +25,87 @@
     <img id="imgpreview" src="">
 </div>
 <div>
-    <i>Увеличение размеров изображения для БФП<br/>
-    до числел, кратных степени двойки (без перемасштабирования) <br /> </i>
+    <i>
+        Увеличение размеров изображения для БФП<br />
+        до числел, кратных степени двойки (без перемасштабирования) <br />
+    </i>
     <label id="img_w">ширина > новая ширина</label> <br />
     <label id="img_h">высота > новая высота</label> <br /><br />
 </div>
-<div>
+<div style="display: inline-block;">
     <select id="filter_type">
         <option>Идеальный фильтр</option>
         <option>Фильтр Баттерворта (ФНЧ)</option>
         <option>Фильтр Баттерворта (ФВЧ)</option>
         <option>Фильтр Гаусса (ФНЧ)</option>
         <option>Фильтр Гаусса (ФВЧ)</option>
-    </select> <br /><br />
+    </select>
+    <br />
+    <br />
 
     <div id="ideal_params">
         <b><label>Области фильтра</label> </b><br />
-        <textarea id="filter_ideal" cols="40" rows="5">512;512;0;0</textarea><br />
-        Формат строки: <i>x; y; r1; r2</i> <br />
-        <i>x,y</i> - координаты окружностей в Фурье-образе относительно верхнего левого угла<br />
-        <i>r1</i> - радиус внутренней окружности<br />
-        <i>r2</i> - радиус внешней окружности<br /><br />
+        <textarea id="filter_ideal" cols="40" rows="5">0;0;0;10</textarea><br />
+        Формат строки: \( x; y; r_1; r_2; \) <br />
+        \(x,y\) - координаты окружностей в Фурье-образе относительно центра, (\(y\) идет сверху вниз)<br />
+        \(r_1\) - радиус внутренней окружности<br />
+        \(r_2\) - радиус внешней окружности<br /><br />
         <b>Множетели</b><br />
         <label>Множитель Фурье-образа</label><input id="fur_mult_ideal" type="text" size="10" value="1">(не влияет на результат фильтрации)</input><br />
-        <label>Удв. условие фильтра</label><input id="onCodition_ideal" type="text" size="10" value="1"> (для области образа между окружностями [r1 < x < r2])</input><br />
+        <label>Удв. условие фильтра</label><input id="onCodition_ideal" type="text" size="10" value="1"> (для области образа между окружностями \(r_1 < x < r_2\))</input><br />
         <label>Не удв. условие фильтра</label><input id="noCodition_ideal" type="text" size="10" value="0">(для остальной части образа)<br />
     </div>
 
     <div id="bat_params" hidden>
         <b><label>Области фильтра</label> </b><br />
-        <textarea id="filter_bat" cols="50" rows="5">512;512;0;0</textarea><br />
-        Формат строки: <i>x; y; r1; r2</i> <br />
-        <i>x,y</i> - координаты окружностей в Фурье-образе относительно верхнего левого угла, по которым берется частота среза<br />
-        <i>r1</i> - радиус внутренней окружности<br />
-        <i>r2</i> - радиус внешней окружности (для фильров нижних и высоких частот брать <b><i>r1 = -r2</i></b>)<br /><br />
+        <textarea id="filter_bat" cols="50" rows="5">0;0;-10;10</textarea><br />
+        Формат строки: \( x; y; r_1; r_2; \) <br />
+        \(x,y\)  - координаты окружностей в Фурье-образе относительно центра (\(y\) идет сверху вниз), по которым берется частота среза<br />
+        \(r_1\) - радиус внутренней окружности<br />
+        \(r_2\) - радиус внешней окружности (для фильров нижних и высоких частот брать \(r_1 = -r_2\))<br /><br />
         <b>Множетели</b><br />
         <label>Множитель Фурье-образа</label><input id="fur_mult_bat" type="text" size="10" value="1">(не влияет на результат фильтрации)</input><br />
-        <label>Коэф. усиления</label><input id="gain_bat" type="text" size="10" value="1"> </input><br />
-        <label>Порядок фильтра</label><input id="order_bat" type="text" size="10" value="2"> </input><br />
+        <label>Коэф. усиления \(G\)</label><input id="gain_bat" type="text" size="10" value="1"> </input><br />
+        <label>Порядок фильтра \(n\)</label><input id="order_bat" type="text" size="10" value="2"> </input><br />
     </div>
 
     <div id="gau_params" hidden>
         <b><label>Области фильтра</label> </b><br />
-        <textarea id="filter_gau" cols="50" rows="5">512;512;0;0</textarea><br />
-        Формат строки: <i>x; y; r1; r2</i> <br />
-        <i>x,y</i> - координаты окружностей в Фурье-образе относительно верхнего левого угла, по которым берется частота среза<br />
-        <i>r1</i> - радиус внутренней окружности<br />
-        <i>r2</i> - радиус внешней окружности (для фильров нижних и высоких частот брать <b><i>r1 = -r2</i></b>)<br /><br />
+        <textarea id="filter_gau" cols="50" rows="5">0;0;0-10;10</textarea><br />
+        Формат строки: \( x; y; r_1; r_2; \) <br />
+        \(x,y\) - координаты окружностей в Фурье-образе относительно центра(\(y\) идет сверху вниз), по которым берется частота среза<br />
+        \(r_1\) - радиус внутренней окружности<br />
+        \(r_2\) - радиус внешней окружности (для фильров нижних и высоких частот брать \(r_1 = -r_2\))<br /><br />
         <b>Множетели</b><br />
         <label>Множитель Фурье-образа</label><input id="fur_mult_gau" type="text" size="10" value="1">(не влияет на результат фильтрации)</input><br />
-        <label>Коэф. усиления</label><input id="gain_gau" type="text" size="10" value="1"> </input><br />
+        <label>Коэф. усиления </label><input id="gain_gau" type="text" size="10" value="1"> </input><br />
     </div>
 
     <br />
     <input id="btn_send" type="button" value="Загрузить" /><br />
 
 </div>
+
 <div class="result">
     <h3 id="progress"></h3> <br />
     <h3 id="opTime"></h3><br />
-                         <div class="result_img">
-                             <div class="result_element">
-                                 <h3>Восстановленное изображение</h3> <br/>
-                                 <img id="resultimg1" src="" />
-                             </div>
-                             <div class="result_element">
-                                 <h3>Фурье-образ</h3><br />
-                                 <img id="resultimg2" src="" />
-                             </div>
-                             <div class="result_element">
-                                 <h3>Фильтр (передаточная функция)</h3><br />
-                                 <img id="resultimg3" src="" />
-                             </div>
-                         </div>
-   
-    
-    
+    <div class="result_img">
+        <div class="result_element">
+            <h3>Восстановленное изображение</h3> 
+            <br/>
+            <img id="resultimg1" src="" />
+        </div>
+        <div class="result_element">
+            <h3>Фурье-образ</h3>
+            <p id="mouse_coords">Коорд. курсора (x,y,R) = </p>
+            <img id="resultimg2" src="" />
+        </div>
+        <div class="result_element">
+            <h3>Фильтр (передаточная функция)</h3>
+            <br />
+            <img id="resultimg3" src="" />
+        </div>
+    </div>
 
 </div>
 
@@ -94,12 +113,14 @@
 @section scripts
 {
 
+
     <script type="text/javascript" src="/Files/js/comon.js?v=@ViewBag.jsversion"></script>
 
     <script type="text/javascript">
 
 
-        //$('#bat_params').hide();
+        let new_width = 0;
+        let new_height = 0;
 
         let cb = document.getElementById("filter_type");
         cb.onchange = () => {
@@ -110,10 +131,10 @@
             if (cb.selectedIndex === 0) {
                 $('#ideal_params').show();
             }
-            else if (cb.selectedIndex  === 1 || cb.selectedIndex  === 2) {
+            else if (cb.selectedIndex === 1 || cb.selectedIndex === 2) {
                 $('#bat_params').show();
             }
-            else if (cb.selectedIndex  === 3 || cb.selectedIndex  === 4) {
+            else if (cb.selectedIndex === 3 || cb.selectedIndex === 4) {
                 $('#gau_params').show();
             }
         };
@@ -122,20 +143,33 @@
         let imagename2 = "";
         let imagename3 = "";
 
+        let fur_img = $('#resultimg2');
+        let textlabel = document.getElementById("mouse_coords");
+       
+        fur_img.mousemove ((e) => {
+            let x = Math.round (e.clientX - fur_img.offset().left + $(window).scrollLeft()) - new_width/2; 
+            let y = Math.round (e.clientY - fur_img.offset().top + $(window).scrollTop()) - new_height/2;
+            let R = Math.round(Math.sqrt(x * x + y * y));
+            textlabel.innerHTML = "Коорд. курсора (x,y,R) = "+ x + " " + y + " " + R;
+        });
+
+
         operation_url = "/Main/LoadImageFur";
 
         let okrugl = (x) => {
             return Math.pow(2, Math.ceil(Math.log2(x)));
         };
 
+
         image_opened = () => {
-            let new_width = okrugl(imageWidth);
-            let new_height = okrugl(imageHeight);
+
+            new_width = okrugl(imageWidth);
+            new_height = okrugl(imageHeight);
             $('#img_h')[0].innerHTML += " ► " + new_height;
             $('#img_w')[0].innerHTML += " ► " + new_width;
-            $("#filter_ideal").val(new_width / 2 + ";" + new_height / 2 + ";0;10");
-            $("#filter_bat").val(new_width / 2 + ";" + new_height / 2 + ";-10;10");
-            $("#filter_gau").val(new_width / 2 + ";" + new_height / 2 + ";-10;10");
+            $("#filter_ideal").val("0;0;0;10");
+            $("#filter_bat").val("0;0;-10;10");
+            $("#filter_gau").val("0;0;-10;10");
 
         }
 
@@ -143,7 +177,7 @@
             let data = new FormData();
 
             data.append("file", $("#file")[0].files[0]);
-            data.append("filter_type",cb.selectedIndex);
+            data.append("filter_type", cb.selectedIndex);
 
             if (cb.selectedIndex === 0) {
                 data.append("filter", $("#filter_ideal").val());
@@ -161,7 +195,6 @@
                 data.append("inFilter", $("#gain_gau").val());
                 data.append("fur_mult", $("#fur_mult_gau").val());
             }
-
 
             return data;
         };

@@ -401,6 +401,10 @@ namespace scoi.Models
                     {
                         int y = i / new_width;
                         int x = i - y * new_width;
+                        y -= new_height / 2;
+                        x -= new_width / 2;
+
+
                         foreach (var v in filter_params_double)
                         {
                             if ((x - v[0]) * (x - v[0]) + (y - v[1]) * (y - v[1]) >= v[2] * v[2] &&
@@ -421,13 +425,13 @@ namespace scoi.Models
                 {
                     complex_bytes_filtered = complex_bytes.Select((a, i) =>
                     {
-                        int y = i / new_width;
-                        int x = i - y * new_width;
-  
                         var val = filter_params_double.Select(v =>
                         {
                             int y = i / new_width;
                             int x = i - y * new_width;
+                            y -= new_height / 2;
+                            x -= new_width / 2;
+
                             double wc = 0.5 * v[3] - 0.5 * v[2];
                             double h = v[3] - wc;
                             double b = Butter(x, y, wc, (int)out_filter_zone, v[0], v[1], in_filter_zone,h);
@@ -441,18 +445,18 @@ namespace scoi.Models
                 {
                     complex_bytes_filtered = complex_bytes.Select((a, i) =>
                     {
-                        int y = i / new_width;
-                        int x = i - y * new_width;
-
                         var val = filter_params_double.Select(v =>
                         {
                             int y = i / new_width;
                             int x = i - y * new_width;
+                            y -= new_height / 2;
+                            x -= new_width / 2;
+
                             double wc = 0.5 * v[3] - 0.5 * v[2];
                             double h = v[3] - wc;
                             double b = in_filter_zone - Butter(x, y, wc, (int)out_filter_zone, v[0], v[1], in_filter_zone,h);
                             return b;
-                        }).Max();
+                        }).Min();
                         filter_bytes[i * 3 + color] = clmp(255 * val);
                         return a * val;
                     }).ToArray();
@@ -461,13 +465,12 @@ namespace scoi.Models
                 {
                     complex_bytes_filtered = complex_bytes.Select((a, i) =>
                     {
-                        int y = i / new_width;
-                        int x = i - y * new_width;
-
                         var val = filter_params_double.Select(v =>
                         {
                             int y = i / new_width;
                             int x = i - y * new_width;
+                            y -= new_height / 2;
+                            x -= new_width / 2;
                             double wc = 0.5 * v[3] - 0.5 * v[2];
                             double h = v[3] - wc;
                             double b = Gauss(x, y, wc,  v[0], v[1], in_filter_zone, h);
@@ -481,18 +484,18 @@ namespace scoi.Models
                 {
                     complex_bytes_filtered = complex_bytes.Select((a, i) =>
                     {
-                        int y = i / new_width;
-                        int x = i - y * new_width;
 
                         var val = filter_params_double.Select(v =>
                         {
                             int y = i / new_width;
                             int x = i - y * new_width;
+                            y -= new_height / 2;
+                            x -= new_width / 2;
                             double wc = 0.5 * v[3] - 0.5 * v[2];
                             double h = v[3] - wc;
                             double b = in_filter_zone - Gauss(x, y, wc, v[0], v[1], in_filter_zone, h);
                             return b;
-                        }).Max();
+                        }).Min();
                         filter_bytes[i * 3 + color] = clmp(255 * val);
                         return a * val;
                     }).ToArray();
@@ -505,6 +508,8 @@ namespace scoi.Models
                 {
                     int y = i / new_width;
                     int x = i - y * new_width;
+                    y -= new_height / 2;
+                    x -= new_width / 2;
                     new_bytes[i * 3 + color] = clmp(Math.Round( (Math.Pow(-1,x+y) * complex_bytes_result[i]).Real));
                     furier_ma_bytes[i * 3 + color] = clmp(furier_multiplyer * F(complex_bytes[i].Magnitude)*255/max_ma );
                 }
@@ -546,8 +551,8 @@ namespace scoi.Models
             using var g_fur = Graphics.FromImage(new_bitmap_re);
             foreach (var v in filter_params_double)
             {
-                g_fur.DrawEllipse(Pens.GreenYellow, (int)v[0] - (int)v[2], (int)v[1] - (int)v[2], (int)v[2] * 2, (int)v[2] * 2);
-                g_fur.DrawEllipse(Pens.GreenYellow, (int)v[0] - (int)v[3], (int)v[1] - (int)v[3], (int)v[3] * 2, (int)v[3] * 2);
+                g_fur.DrawEllipse(Pens.GreenYellow, (int)v[0] - (int)v[2] + new_width / 2, (int)v[1] - (int)v[2] + new_height /2, (int)v[2] * 2, (int)v[2] * 2);
+                g_fur.DrawEllipse(Pens.GreenYellow, (int)v[0] - (int)v[3] + new_width / 2, (int)v[1] - (int)v[3] + new_height / 2, (int)v[3] * 2, (int)v[3] * 2);
             }
 
             //рисуем маску фильтра
