@@ -656,7 +656,7 @@ namespace scoi.Models
 
         }
         
-        public static Bitmap BinarizationNiblack(Bitmap input, int a = 21, double sens = -0.2)
+        public static Bitmap BinarizationNiblack(Bitmap input, int a = 21, double sens = -0.2, int h=0)
         {
             int width = input.Width;
             int height = input.Height;
@@ -700,56 +700,68 @@ namespace scoi.Models
                 }
             }
 
-            for (int _i = 0; _i < height; ++_i)
+            Parallel.For(0, width * height, arr_i =>
             {
+                if (input_bytes[arr_i*3] < h)
+                {
+                    input_bytes[arr_i*3 + 1] = 0;
+                    return;
+                }
+                else if (input_bytes[arr_i*3] > 255 - h)
+                {
+                    input_bytes[arr_i*3 + 1] = 255;
+                    return;
+                }
+
+                int _i = arr_i / width;
+                int _j = arr_i - _i * width;
+
                 int y_min = _i - (int)Math.Ceiling(1.0 * a / 2) + 1;
                 y_min = (y_min < 0) ? 0 : y_min;
                 int y_max = _i + (int)Math.Floor(1.0 * a / 2);
                 y_max = (y_max >= height) ? height - 1 : y_max;
 
-                for (int _j = 0; _j < width; ++_j)
-                {
+                int index = arr_i*3;
 
-                    int index = _i * width * 3 + _j*3;
-                    long sum = 0;
-                    long sqr_sum = 0;
+                long sum = 0;
+                long sqr_sum = 0;
 
-                    int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
-                    x_min = (x_min < 0) ? 0 : x_min;
-                    int x_max = _j + (int)Math.Floor(1.0 * a / 2);
-                    x_max = (x_max >= width) ? width - 1 : x_max;
+                int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
+                x_min = (x_min < 0) ? 0 : x_min;
+                int x_max = _j + (int)Math.Floor(1.0 * a / 2);
+                x_max = (x_max >= width) ? width - 1 : x_max;
 
 
 
-                    sum = ( (x_min >= 1 && y_min >= 1) ? int_mat[y_min - 1, x_min - 1] : 0) + //A
-                        int_mat[y_max, x_max] -    //D
-                        ((y_min >= 1) ? int_mat[y_min - 1, x_max] : 0) -   //B
-                        ((x_min >= 1) ? int_mat[y_max, x_min - 1] : 0);  //C
+                sum = ((x_min >= 1 && y_min >= 1) ? int_mat[y_min - 1, x_min - 1] : 0) + //A
+                      int_mat[y_max, x_max] -    //D
+                      ((y_min >= 1) ? int_mat[y_min - 1, x_max] : 0) -   //B
+                      ((x_min >= 1) ? int_mat[y_max, x_min - 1] : 0);  //C
 
-                    sqr_sum = ((x_min >= 1 && y_min >= 1) ? int_sqr_mat[y_min - 1, x_min - 1] : 0) + //A
-                              int_sqr_mat[y_max, x_max] -    //D
+                sqr_sum = ((x_min >= 1 && y_min >= 1) ? int_sqr_mat[y_min - 1, x_min - 1] : 0) + //A
+                          int_sqr_mat[y_max, x_max] -    //D
                           ((y_min >= 1) ? int_sqr_mat[y_min - 1, x_max] : 0) -   //B
                           ((x_min >= 1) ? int_sqr_mat[y_max, x_min - 1] : 0);  //C
-                    
-                    sqr_sum /= (x_max-x_min+1)* (y_max - y_min + 1);
-                    sum /= (x_max - x_min + 1) * (y_max - y_min + 1);
 
-                    double D = Math.Sqrt( sqr_sum - sum*sum );
-                    double t = sum + sens*D;
-                   
+                sqr_sum /= (x_max - x_min + 1) * (y_max - y_min + 1);
+                sum /= (x_max - x_min + 1) * (y_max - y_min + 1);
 
-                    //результат обработки кладем в синий канал
-                    input_bytes[index+1] = (input_bytes[index] <= t) ? (byte)0 : (byte)255;
+                double D = Math.Sqrt(sqr_sum - sum * sum);
+                double t = sum + sens * D;
 
-                }
-            }
-            
-            
-            for (int i = 0; i < input_bytes.Length; i+=3)
+
+                //результат обработки кладем в синий канал
+                input_bytes[index + 1] = (input_bytes[index] <= t) ? (byte)0 : (byte)255;
+
+            });
+
+
+            Parallel.For(0, width * height, arr_i =>
             {
-                input_bytes[i + 0] = input_bytes[i  + 1];
-                input_bytes[i + 2] = input_bytes[i  + 1];
-            }
+                input_bytes[arr_i * 3 + 0] = input_bytes[arr_i * 3 + 1];
+                input_bytes[arr_i * 3 + 2] = input_bytes[arr_i * 3 + 1];
+            });
+
 
 
             Bitmap img_ret = new Bitmap(width, height, PixelFormat.Format24bppRgb);
@@ -758,7 +770,7 @@ namespace scoi.Models
             return img_ret;
         }
 
-        public static Bitmap BinarizationSauval(Bitmap input, int a = 21, double k = 0.5)
+        public static Bitmap BinarizationSauval(Bitmap input, int a = 21, double k = 0.5, int h = 0)
         {
 
 
@@ -815,6 +827,18 @@ namespace scoi.Models
                 {
 
                     int index = _i * width * 3 + _j * 3;
+
+                    if (input_bytes[index] < h)
+                    {
+                        input_bytes[index + 1] = 0;
+                        continue;
+                    }
+                    else if (input_bytes[index] > 255 - h)
+                    {
+                        input_bytes[index + 1] = 255;
+                        continue;
+                    }
+
                     long sum = 0;
                     long sqr_sum = 0;
 
@@ -863,7 +887,7 @@ namespace scoi.Models
             return img_ret;
         }
 
-        public static Bitmap BinarizationWolf(Bitmap input, int a = 21, double gain = 0.5)
+        public static Bitmap BinarizationWolf(Bitmap input, int a = 21, double gain = 0.5, int h = 0)
         {
 
 
@@ -927,6 +951,18 @@ namespace scoi.Models
                 {
 
                     int index = _i * width * 3 + _j * 3;
+
+                    if (input_bytes[index] < h)
+                    {
+                        input_bytes[index + 1] = 0;
+                        continue;
+                    }
+                    else if (input_bytes[index] > 255 - h)
+                    {
+                        input_bytes[index + 1] = 255;
+                        continue;
+                    }
+
                     long sum = 0;
                     long sqr_sum = 0;
 
@@ -976,7 +1012,7 @@ namespace scoi.Models
             return img_ret;
         }
 
-        public static Bitmap BinarizationBredly(Bitmap input, int a = 21, double t = 0.15)
+        public static Bitmap BinarizationBredly(Bitmap input, int a = 21, double t = 0.15, int h = 0)
         {
             int width = input.Width;
             int height = input.Height;
@@ -1025,9 +1061,19 @@ namespace scoi.Models
                 {
 
                     int index = _i * width * 3 + _j * 3;
-                    long sum = 0;
-                    
 
+                    if (input_bytes[index] < h)
+                    {
+                        input_bytes[index + 1] = 0;
+                        continue;
+                    }
+                    else if (input_bytes[index] > 255 - h)
+                    {
+                        input_bytes[index + 1] = 255;
+                        continue;
+                    }
+
+                    long sum = 0;
                     int x_min = _j - (int)Math.Ceiling(1.0 * a / 2) + 1;
                     x_min = (x_min < 0) ? 0 : x_min;
                     int x_max = _j + (int)Math.Floor(1.0 * a / 2);

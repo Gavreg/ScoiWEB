@@ -89,8 +89,9 @@ namespace scoi.Controllers
                 jt.finalize();
             };
             id = dictionary.setTask(jt);
-            
+
             return $"{id}:{dir}\\{outputName}_result.jpg";
+            //return $"{id}:https://cdn.shopify.com/s/files/1/1061/1924/products/Smiling_Devil_Emoji_1024x1024.png?v=1571606036";
         }
 
         [HttpPost]
