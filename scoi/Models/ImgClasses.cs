@@ -684,21 +684,21 @@ namespace scoi.Models
             var int_mat = new long[height, width];
             var int_sqr_mat = new long[height, width];
 
-            for (int i = 0; i < height; ++i)
+            Parallel.For(0, width * height, arr_i =>
             {
-                for (int j = 0; j < width; ++j)
-                {
-                    int_mat [i,j] = input_bytes[i * width * 3 + j * 3] + 
-                                    (j  >= 1 ? int_mat[i, j - 1] : 0) +
-                                    (i  >= 1 ? int_mat[i-1, j] : 0) -
-                                    (i  >= 1 && j  >= 1 ? int_mat[i - 1, j - 1] : 0);
+                int i = arr_i / width;
+                int j = arr_i - i * width;
+                int_mat[i, j] = input_bytes[i * width * 3 + j * 3] +
+                                (j >= 1 ? int_mat[i, j - 1] : 0) +
+                                (i >= 1 ? int_mat[i - 1, j] : 0) -
+                                (i >= 1 && j >= 1 ? int_mat[i - 1, j - 1] : 0);
 
-                    int_sqr_mat[i, j] = input_bytes[i * width * 3 + j * 3]* input_bytes[i * width * 3 + j * 3] +
-                                    (j  >= 1 ? int_sqr_mat[i, j - 1] : 0) +
-                                    (i  >= 1 ? int_sqr_mat[i - 1, j] : 0) -
-                                    (i  >= 1 && j  >= 1 ? int_sqr_mat[i - 1, j - 1] : 0);
-                }
-            }
+                int_sqr_mat[i, j] = input_bytes[i * width * 3 + j * 3] * input_bytes[i * width * 3 + j * 3] +
+                                    (j >= 1 ? int_sqr_mat[i, j - 1] : 0) +
+                                    (i >= 1 ? int_sqr_mat[i - 1, j] : 0) -
+                                    (i >= 1 && j >= 1 ? int_sqr_mat[i - 1, j - 1] : 0);
+            });
+
 
             Parallel.For(0, width * height, arr_i =>
             {
