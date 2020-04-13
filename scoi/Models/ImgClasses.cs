@@ -670,12 +670,13 @@ namespace scoi.Models
 
 
             //чб изображние кладем в красный канал
-            
-            for (int i = 0; i < input_bytes.Length; i+=3)
+
+            Parallel.For(0, width * height, arr_i =>
             {
-                input_bytes[i] = (byte)(0.2125 * input_bytes[i  + 2] + 0.7154 * input_bytes[i  + 1] +
-                                        0.0721 * input_bytes[i  + 0]);
-            }
+                int i = arr_i * 3;
+                input_bytes[i] = (byte)(0.2125 * input_bytes[i + 2] + 0.7154 * input_bytes[i + 1] +
+                                        0.0721 * input_bytes[i + 0]);
+            });
 
 
             //интегральные матрицы для простого вычисления сумм.
