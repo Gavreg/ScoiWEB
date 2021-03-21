@@ -45,7 +45,7 @@
 
     <div id="ideal_params">
         <b><label>Области фильтра</label> </b><br />
-        <textarea id="filter_ideal" cols="40" rows="5">0;0;0;10</textarea><br />
+        <textarea id="filter_ideal" class="filterprops" cols="40" rows="5">0;0;0;10</textarea><br />
         Формат строки: \( x; y; r_1; r_2; \) <br />
         \(x,y\) - координаты окружностей в Фурье-образе относительно центра, (\(y\) идет сверху вниз)<br />
         \(r_1\) - радиус внутренней окружности<br />
@@ -58,7 +58,7 @@
 
     <div id="bat_params" hidden>
         <b><label>Области фильтра</label> </b><br />
-        <textarea id="filter_bat" cols="50" rows="5">0;0;-10;10</textarea><br />
+        <textarea id="filter_bat" class="filterprops" cols="50" rows="5">0;0;-10;10</textarea><br />
         Формат строки: \( x; y; r_1; r_2; \) <br />
         \(x,y\)  - координаты окружностей в Фурье-образе относительно центра (\(y\) идет сверху вниз), по которым берется частота среза<br />
         \(r_1\) - радиус внутренней окружности<br />
@@ -71,7 +71,7 @@
 
     <div id="gau_params" hidden>
         <b><label>Области фильтра</label> </b><br />
-        <textarea id="filter_gau" cols="50" rows="5">0;0;0-10;10</textarea><br />
+        <textarea id="filter_gau" class="filterprops" cols="50" rows="5">0;0;0-10;10</textarea><br />
         Формат строки: \( x; y; r_1; r_2; \) <br />
         \(x,y\) - координаты окружностей в Фурье-образе относительно центра(\(y\) идет сверху вниз), по которым берется частота среза<br />
         \(r_1\) - радиус внутренней окружности<br />
@@ -105,6 +105,11 @@
             <br />
             <img id="resultimg3" src="" />
         </div>
+        <div class="result_element">
+            <h3>Редактор Фурьёв</h3>
+            <br />
+            <canvas id="fur_editor"/>
+        </div>
     </div>
 
 </div>
@@ -118,11 +123,45 @@
 
     <script type="text/javascript">
 
+        let ctx = document.getElementById("fur_editor").getContext("2d");
 
+        class Circle {
+            constructor(x=0, y=0, r=0) {
+                this.x = x;
+                this.y = y;
+                this.r = r;
+            }
+            draw(context) {
+                context.beginPath();
+                context.strokeStyle = "green";
+                context.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+                context.stroke();
+            }
+
+        }
+        let gizmo = new Circle(0,0,10);
+        let gizmo2 = new Circle(0,0,10);
+
+        
         let new_width = 0;
         let new_height = 0;
 
         let cb = document.getElementById("filter_type");
+        let back_image = new Image();
+
+        let render = true;
+
+        let interval = setInterval(() => {
+            if (render) {
+                ctx.drawImage(back_image, 0, 0);
+                gizmo.draw(ctx);
+            }
+            
+        }, 60);
+
+        let isMousePressed = false;
+        let mouseMode = 0;
+
         cb.onchange = () => {
             $('#bat_params').hide();
             $('#gau_params').hide();
@@ -138,6 +177,9 @@
                 $('#gau_params').show();
             }
         };
+        $(".filterprops").change ( (e) => {
+            alert("!");
+        });
 
         let imagename1 = "";
         let imagename2 = "";
@@ -147,13 +189,69 @@
         let textlabel = document.getElementById("mouse_coords");
        
         fur_img.mousemove ((e) => {
-            let x = Math.round (e.clientX - fur_img.offset().left + $(window).scrollLeft()) - new_width/2; 
+
+
+            let x = Math.round(e.clientX - fur_img.offset().left + $(window).scrollLeft()) - new_width / 2; 
             let y = Math.round (e.clientY - fur_img.offset().top + $(window).scrollTop()) - new_height/2;
             let R = Math.round(Math.sqrt(x * x + y * y));
             textlabel.innerHTML = "Коорд. курсора (x,y,R) = "+ x + " " + y + " " + R;
         });
 
+        
 
+        let fur_edtr = $('#fur_editor');
+        fur_edtr.mousedown((e) => {
+            isMousePressed = true;
+        });
+        fur_edtr.mouseup((e) => {
+            isMousePressed = false;
+        });
+        fur_edtr.mousemove((e) => {
+
+            switch (mouseMode)
+            {
+                case 0:
+                {
+                        gizmo.x = e.offsetX;
+                        gizmo.y = e.offsetY;
+                        break;
+                }
+                case 1:
+                {
+                        let x1 = e.offsetX;
+                        let y1 = e.offsetY;
+                        let x2 = gizmo.x;
+                        let y2 = gizmo.y;
+                        gizmo.r = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+                        break;
+                       
+                }
+            }
+
+        });
+        fur_edtr.mousewheel = (e) => {
+            gizmo.r += (e.wheelDelta / 10);
+        };
+
+        fur_edtr.click((e) => {
+            switch (mouseMode) {
+                case 0:
+                {
+
+                    break;
+                }
+                case 1:
+                {
+                    mouseMode = -1;
+                    break;
+                }
+                default:
+                {
+                    mouseMode = -1;
+                }
+            }
+            mouseMode++;
+        });
         operation_url = "/Main/LoadImageFur";
 
         let okrugl = (x) => {
@@ -210,6 +308,17 @@
             $("#resultimg1").attr("src", imagename1);
             $("#resultimg2").attr("src", imagename2);
             $("#resultimg3").attr("src", imagename3);
+            back_image = new Image();
+            back_image.src = imagename3;
+            back_image.onload = () => {
+                let r = render;
+                render = false;
+                let canvas = document.getElementById("fur_editor");
+                canvas.width = back_image.width;
+                canvas.height = back_image.height;
+                render = r;
+            }
+
         }
 
 
