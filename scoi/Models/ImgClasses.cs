@@ -26,22 +26,23 @@ namespace scoi.Models
     
     public static class ImageOperations
     {
-
-
-        
-
         static double[,]  getCoreFromStr(string matrix)
         {
             char[] splitter = { '\n' };
             matrix = matrix.Replace('\r', ' ');
-            var str_list = matrix.Split(splitter, StringSplitOptions.RemoveEmptyEntries);
+            var str_list = matrix.Split(splitter, System.StringSplitOptions.RemoveEmptyEntries);
+            str_list = str_list
+                .Select(s => s.Trim())
+                .Where(s => s.Length > 0).ToArray();
             double[,] mat = new double[0, 0];
 
 
             for (int i = 0; i < str_list.Count(); ++i)
             {
                 str_list[i] = str_list[i].Replace('\r', ' ');
-                var chars = str_list[i].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var chars = str_list[i].Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => s.Trim())
+                    .Where(s => s.Length > 0).ToArray(); ;
 
                 if (i == 0)
                 {
@@ -95,6 +96,7 @@ namespace scoi.Models
             if (ProcessorCount > 2)
                 opt.MaxDegreeOfParallelism = ProcessorCount - 2;
             else opt.MaxDegreeOfParallelism = 1;
+            opt.MaxDegreeOfParallelism = 1;
             Parallel.For(0, width*height, opt,arr_i =>
             {
                 int _i = arr_i / width;
@@ -108,7 +110,7 @@ namespace scoi.Models
                 {
                     int i = _i + ii - M / 2;
                     if (i < 0)
-                        i *= -1;
+                        i = -i;
                     if (i >= height)
                         i = 2 * height - i - 1;
 
@@ -117,7 +119,7 @@ namespace scoi.Models
                         int j = _j + jj - N / 2;
 
                         if (j < 0)
-                            j *= -1;
+                            j =-j;
 
                         if (j >= width)
                             j = 2 * width - j - 1;
