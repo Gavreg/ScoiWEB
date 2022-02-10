@@ -1,15 +1,9 @@
 ﻿
-@{
-    ViewData["Title"] = "fur";
-}
+@{ ViewData["Title"] = "fur"; }
 
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6">
-
-</script>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script id="MathJax-script" async
-        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-
-</script>
+        src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 <style>
     h3 {
         margin-top: 5px;
@@ -91,25 +85,24 @@
     <h3 id="opTime"></h3><br />
     <div class="result_img">
         <div class="result_element">
-            <h3>Восстановленное изображение</h3> 
-            <br/>
+            <h3>Восстановленное изображение</h3>
+            <br />
             <img id="resultimg1" src="" />
         </div>
         <div class="result_element">
             <h3>Фурье-образ</h3>
+            <input id="cbEditor" type="checkbox" checked />Редактор фильтра <br/>
+            <input id="cbInnerRadius" type="checkbox" oninput="cbInnerRadius_change"/>Внутренний радиус <br/>
             <p id="mouse_coords">Коорд. курсора (x,y,R) = </p>
-            <img id="resultimg2" src="" />
+            <!-- img id="resultimg2" src="" / -->
+            <canvas id="fur_editor" />
         </div>
         <div class="result_element">
             <h3>Фильтр (передаточная функция)</h3>
             <br />
             <img id="resultimg3" src="" />
         </div>
-        <div class="result_element">
-            <h3>Редактор Фурьёв</h3>
-            <br />
-            <canvas id="fur_editor"/>
-        </div>
+
     </div>
 
 </div>
@@ -123,135 +116,306 @@
 
     <script type="text/javascript">
 
-        let ctx = document.getElementById("fur_editor").getContext("2d");
-
         class Circle {
-            constructor(x=0, y=0, r=0) {
+            constructor(x = 0, y = 0, r = 0) {
                 this.x = x;
                 this.y = y;
                 this.r = r;
             }
             draw(context) {
                 context.beginPath();
-                context.strokeStyle = "green";
                 context.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
                 context.stroke();
             }
 
         }
-        let gizmo = new Circle(0,0,10);
-        let gizmo2 = new Circle(0,0,10);
 
-        
-        let new_width = 0;
-        let new_height = 0;
-
-        let cb = document.getElementById("filter_type");
-        let back_image = new Image();
-
-        let render = true;
-
-        let interval = setInterval(() => {
-            if (render) {
-                ctx.drawImage(back_image, 0, 0);
-                gizmo.draw(ctx);
+        class DoubleCircle extends Circle {
+            constructor(x = 0, y = 0, r1 = 0, r2 = 0) {
+                super(x, y, r1);
+                this.r2 = r2;
+                this.r1 = r1;
+                this.style = "";
             }
-            
-        }, 60);
-
-        let isMousePressed = false;
-        let mouseMode = 0;
-
-        cb.onchange = () => {
-            $('#bat_params').hide();
-            $('#gau_params').hide();
-            $('#ideal_params').hide();
-
-            if (cb.selectedIndex === 0) {
-                $('#ideal_params').show();
+            draw(context) {
+                context.strokeStyle = this.style;
+                context.beginPath();
+                context.arc(this.x, this.y, this.r, 0, 2 * Math.PI);
+                context.stroke();
+                context.beginPath();
+                context.arc(this.x, this.y, this.r2, 0, 2 * Math.PI);
+                context.stroke();
             }
-            else if (cb.selectedIndex === 1 || cb.selectedIndex === 2) {
-                $('#bat_params').show();
-            }
-            else if (cb.selectedIndex === 3 || cb.selectedIndex === 4) {
-                $('#gau_params').show();
-            }
-        };
-        $(".filterprops").change ( (e) => {
-            alert("!");
-        });
+        }
 
         let imagename1 = "";
         let imagename2 = "";
         let imagename3 = "";
 
-        let fur_img = $('#resultimg2');
-        let textlabel = document.getElementById("mouse_coords");
-       
-        fur_img.mousemove ((e) => {
+        let fur_img;
+        let textlabel;
+        let fur_edtr;
+
+        let fur_editor;
+        let ctx;
+
+        let gizmo = new DoubleCircle(0, 0, 10, 0);
+        let gizmo2 = new DoubleCircle(0, 0, 10,0);
+        let circles = new Array();
 
 
-            let x = Math.round(e.clientX - fur_img.offset().left + $(window).scrollLeft()) - new_width / 2; 
-            let y = Math.round (e.clientY - fur_img.offset().top + $(window).scrollTop()) - new_height/2;
-            let R = Math.round(Math.sqrt(x * x + y * y));
-            textlabel.innerHTML = "Коорд. курсора (x,y,R) = "+ x + " " + y + " " + R;
-        });
+        let new_width = 0;
+        let new_height = 0;
 
-        
+        let cb;
+        let back_image = new Image();
 
-        let fur_edtr = $('#fur_editor');
-        fur_edtr.mousedown((e) => {
-            isMousePressed = true;
-        });
-        fur_edtr.mouseup((e) => {
-            isMousePressed = false;
-        });
-        fur_edtr.mousemove((e) => {
+        let render = true;
 
-            switch (mouseMode)
-            {
-                case 0:
-                {
-                        gizmo.x = e.offsetX;
-                        gizmo.y = e.offsetY;
-                        break;
+        let isMousePressed = false;
+        let mouseMode = 0;
+
+        let textarea;
+        let clickX = 0;
+        let clickY = 0;
+        let mY = 0;
+        let mX = 0;
+        let oldR = 0;
+
+        $( document ).ready(function() {
+
+            fur_img = $('#resultimg2');
+            textlabel = document.getElementById("mouse_coords");
+            fur_edtr = $('#fur_editor');
+
+            fur_editor = document.getElementById("fur_editor");
+            ctx = fur_editor.getContext("2d");
+            cb = document.getElementById("filter_type");
+            textarea = document.getElementById("filter_ideal");
+
+            parse_params(textarea);
+
+            let interval = setTimeout(function timerFunc() {
+                if (render) {
+                    render_canvas();
                 }
-                case 1:
-                {
-                        let x1 = e.offsetX;
-                        let y1 = e.offsetY;
-                        let x2 = gizmo.x;
-                        let y2 = gizmo.y;
-                        gizmo.r = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
-                        break;
-                       
+                interval = setTimeout(timerFunc, 20);
+            }, 20);
+
+            cb.onchange = () => {
+                $('#bat_params').hide();
+                $('#gau_params').hide();
+                $('#ideal_params').hide();
+
+                if (cb.selectedIndex === 0) {
+                    $('#ideal_params').show();
+                    textarea = document.getElementById("filter_ideal");
                 }
+                else if (cb.selectedIndex === 1 || cb.selectedIndex === 2) {
+                    $('#bat_params').show();
+                    textarea = document.getElementById("filter_bat");
+                }
+                else if (cb.selectedIndex === 3 || cb.selectedIndex === 4) {
+                    $('#gau_params').show();
+                    textarea = document.getElementById("filter_gau");
+                }
+                parse_params();
+            };
+            $(".filterprops").change((e) => {
+                parse_params(e.target);
+                
+            });
+
+            fur_edtr.mousedown((e) => {
+                isMousePressed = true;
+            });
+            fur_edtr.mouseup((e) => {
+                isMousePressed = false;
+            });
+            fur_edtr.mousemove((e) => {
+                mX = e.offsetX;
+                mY = e.offsetY;
+
+                switch (mouseMode) {
+                    case 3:
+                    case 4:
+                    case 0:
+                        {
+                            gizmo.x = Number(e.offsetX);
+                            gizmo.y = Number(e.offsetY);
+                            gizmo2.x = -gizmo.x + fur_editor.width;
+                            gizmo2.y = -gizmo.y + fur_editor.height;
+                            break;
+                        }
+                    case 1:
+                        {
+                            let x1 = e.offsetX;
+                            let y1 = e.offsetY;
+                            let x2 = gizmo.x;
+                            let y2 = gizmo.y;
+                            
+                            gizmo.r = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+                            gizmo2.r = gizmo.r;
+
+                            gizmo.r2 = gizmo.r;
+                            gizmo2.r2 = gizmo.r;
+                            break;
+
+                        }
+                    case 2:
+                        {
+                            let x1 = e.offsetX;
+                            let y1 = e.offsetY;
+                            let x2 = gizmo.x;
+                            let y2 = gizmo.y;
+                            let r2 = Math.sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+                            if (r2 > gizmo.r) r2 = gizmo.r;
+                            gizmo.r2 = r2;
+                            gizmo2.r2 = r2;
+                            break;
+                        }
+                }
+
+                let x = Math.round(e.clientX - fur_edtr.offset().left + $(window).scrollLeft()) - new_width / 2;
+                let y = Math.round(e.clientY - fur_edtr.offset().top + $(window).scrollTop()) - new_height / 2;
+                let R = Math.round(Math.sqrt(x * x + y * y));
+                textlabel.innerHTML = "Коорд. курсора (x,y,R) = " + x + " " + y + " " + R;
+
+            });
+            fur_edtr.mouseleave((e) => {
+                render = false;
+                if (mouseMode == 3) {
+                    mouseMode = 0;
+                    gizmo.r = 10;
+                    gizmo2.r = 10;
+                    gizmo.r2 = 0;
+                    gizmo2.r2 = 0;
+                }
+
+            });
+
+            fur_edtr.mouseenter((e) => {
+                render = true;
+            });
+
+            fur_edtr.mouseleave((e) => {
+                if (mouseMode==3)
+                    mouseMode = 0;
+            });
+
+            fur_edtr.click((e) => {
+                clickX = e.offsetX;
+                clickY = e.offsetY;
+
+                switch (mouseMode) {
+                    case 0:
+                        {
+                            mouseMode=1;
+                            oldR = gizmo.r;
+                            break;
+                        }
+                    case 1:
+                    {
+                            if (document.getElementById("cbInnerRadius").checked) {
+                                mouseMode = 2;
+
+                            }
+                            else {
+                                mouseMode = 3;
+                                gizmo.r2 = 0;
+                                gizmo2.r2 = 0;
+                                let s = "" + Math.round(gizmo.x - 0.5 * fur_editor.width) + ";" + Math.round(gizmo.y - 0.5 * fur_editor.height) + ";" + Math.round(gizmo.r2) + ";" + Math.round(gizmo.r);
+                                textarea.value += "\n" + s;
+                                s = "" + Math.round(gizmo2.x - 0.5 * fur_editor.width) + ";" + Math.round(gizmo2.y - 0.5 * fur_editor.height) + ";" + Math.round(gizmo2.r2) + ";" + Math.round(gizmo2.r);
+                                textarea.value += "\n" + s;
+                                parse_params(textarea);
+                                }
+                            break;
+                        }
+                    case 2:
+                        {
+                            
+                            let s = "" + Math.round(gizmo.x - 0.5 * fur_editor.width) + ";" + Math.round(gizmo.y - 0.5 * fur_editor.height) + ";" + Math.round(gizmo.r2) + ";" + Math.round(gizmo.r);
+                            textarea.value += "\n" + s;
+                            s = "" + Math.round(gizmo2.x - 0.5 * fur_editor.width) + ";" + Math.round(gizmo2.y - 0.5 * fur_editor.height) + ";" + Math.round(gizmo2.r2) + ";" + Math.round(gizmo2.r);
+                            textarea.value += "\n" + s;
+                            parse_params(textarea);
+                            break;
+                        }
+                    case 3:
+                    {
+                            mouseMode = 3;
+                            let s = "" + Math.round(gizmo.x - 0.5 * fur_editor.width) + ";" + Math.round(gizmo.y - 0.5 * fur_editor.height) + ";" + Math.round(gizmo.r2) + ";" + Math.round(gizmo.r);
+                            textarea.value += "\n" + s;
+                            s = "" + Math.round(gizmo2.x - 0.5 * fur_editor.width) + ";" + Math.round(gizmo2.y - 0.5 * fur_editor.height) + ";" + Math.round(gizmo2.r2) + ";" + Math.round(gizmo2.r);
+                            textarea.value += "\n" + s;
+                            parse_params(textarea);
+                            break;
+                    }
+
+                    default:
+                        {
+                            mouseMode = 0;
+                        }
+                }
+
+            });
+
+        });
+
+        document.getElementById("cbInnerRadius").onclick = cbInnerRadius_change;
+
+        function cbInnerRadius_change(e) {
+            mouseMode = 0;
+            gizmo.r = 10;
+            gizmo2.r = 10;
+            gizmo.r2 = 0;
+            gizmo2.r2 = 0;
+            
+        }
+        function parse_params(textarea) {
+            let arr = textarea.value.split("\n");
+            circles = new Array();
+            arr.forEach((e, i) => {
+                let p = e.split(";");
+                let c = new DoubleCircle(Number(p[0]) + Number(fur_editor.width) / 2,
+                    Number(p[1]) + Number(fur_editor.height) / 2,
+                    p[3],
+                    p[2]);
+                circles.push(c);
+            });
+            render_canvas();
+        }
+
+        function render_canvas() {
+            ctx.clearRect(0, 0, fur_editor.width, fur_editor.height);
+            ctx.strokeStyle = "green";
+            ctx.drawImage(back_image, 0, 0);
+
+            if (mouseMode == 3)
+                ctx.setLineDash([5, 5]);
+            
+
+            gizmo.draw(ctx);
+            gizmo2.draw(ctx);
+
+            ctx.setLineDash([]);
+
+            circles.forEach((e, i) => {
+                ctx.strokeStyle = "red";
+                e.draw(ctx);
+            });
+
+           
+           
+
+            if (mouseMode === 1 || mouseMode === 2) {
+                ctx.font = "18px serif";
+                ctx.fillStyle = "red"
+                ctx.fillText("R=" + Math.round(gizmo.r), mX, mY);
             }
+        }
 
-        });
-        fur_edtr.mousewheel = (e) => {
-            gizmo.r += (e.wheelDelta / 10);
-        };
-
-        fur_edtr.click((e) => {
-            switch (mouseMode) {
-                case 0:
-                {
-
-                    break;
-                }
-                case 1:
-                {
-                    mouseMode = -1;
-                    break;
-                }
-                default:
-                {
-                    mouseMode = -1;
-                }
-            }
-            mouseMode++;
-        });
         operation_url = "/Main/LoadImageFur";
 
         let okrugl = (x) => {
@@ -268,6 +432,7 @@
             $("#filter_ideal").val("0;0;0;10");
             $("#filter_bat").val("0;0;-10;10");
             $("#filter_gau").val("0;0;-10;10");
+            parse_params();
 
         }
 
@@ -306,26 +471,25 @@
 
         operation_complete = () => {
             $("#resultimg1").attr("src", imagename1);
-            $("#resultimg2").attr("src", imagename2);
+            //$("#resultimg2").attr("src", imagename2);
             $("#resultimg3").attr("src", imagename3);
             back_image = new Image();
-            back_image.src = imagename3;
+            back_image.src = imagename2;
+            let r = render;
+            render = false;
             back_image.onload = () => {
-                let r = render;
-                render = false;
+
                 let canvas = document.getElementById("fur_editor");
                 canvas.width = back_image.width;
                 canvas.height = back_image.height;
                 render = r;
-            }
 
+                parse_params();
+            }
         }
 
-
     </script>
-
-
-
+    
 }
 
 
