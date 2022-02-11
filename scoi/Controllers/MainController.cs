@@ -55,6 +55,11 @@ namespace scoi.Controllers
             ViewBag.jsversion = js_comon_version;
             return View();
         }
+
+        public ViewResult LogoGen()
+        {
+            return View("vLogoGen");
+        }
         [HttpPost]
         public async Task<string> LoadImage(ImageFormModel data)
         {
