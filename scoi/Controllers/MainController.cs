@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Globalization;
 using System.Linq;
@@ -53,6 +54,11 @@ namespace scoi.Controllers
         {
             ViewBag.jsversion = js_comon_version;
             return View();
+        }
+
+        public ViewResult LogoGen()
+        {
+            return View("vLogoGen");
         }
         [HttpPost]
         public async Task<string> LoadImage(ImageFormModel data)
@@ -289,6 +295,55 @@ namespace scoi.Controllers
             jt.contextTask.Wait();
             var ts = jt.endTime - jt.startTime;
             return ts.TotalMilliseconds;
+        }
+
+        [HttpGet]
+        public async Task<FileContentResult> getLogo(string s1, string s2, string s3)
+        {
+
+            using Bitmap back = new Bitmap(_hostingEnvironment.WebRootPath + "\\LogoGen\\st_logo_empty.png");
+            back.SetResolution(80,80);
+            using Graphics g_back = Graphics.FromImage(back);
+
+            var myFonts = new System.Drawing.Text.PrivateFontCollection();
+            myFonts.AddFontFile(_hostingEnvironment.WebRootPath + "\\LogoGen\\new_zelek.ttf");
+            using var mainFont = new System.Drawing.Font(myFonts.Families[0], 101);
+            using var secFont = new System.Drawing.Font("Arial", 34);
+
+
+           
+           
+            var main_size = g_back.MeasureString(s1, mainFont);
+            var sec_size1 = g_back.MeasureString(s2, secFont);
+            var sec_size2 = g_back.MeasureString(s2, secFont);
+
+            var max_w = Math.Max(main_size.Width, Math.Max (sec_size1.Width,sec_size2.Width));
+            using Bitmap new_bmp = new Bitmap((int)(279+max_w+10),back.Height);
+            new_bmp.SetResolution(80, 80);
+            using Graphics g = Graphics.FromImage(new_bmp);
+
+
+            g.CompositingQuality = CompositingQuality.HighQuality;
+            g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.SmoothingMode = SmoothingMode.HighQuality;
+            
+            g.DrawImage(back,0,0);
+
+            g.DrawString(s1, mainFont,  new SolidBrush(Color.FromArgb(149,10,42)),279,278);
+            g.DrawString(s2, secFont, new SolidBrush(Color.FromArgb(27, 25, 24)), 300, 386);
+            g.DrawString(s3, secFont, new SolidBrush(Color.FromArgb(27, 25, 24)), 300, 420);
+
+
+            await using var ms = new MemoryStream();
+            new_bmp.Save(ms,ImageFormat.Png);
+            
+            ms.Position = 0;
+            
+            var b_arr = new byte[ms.Length];
+            ms.Read(b_arr, 0, b_arr.Length);
+
+            var fr = base.File(b_arr, "image/x-png");
+            return fr;
         }
 
         public string getTasks()

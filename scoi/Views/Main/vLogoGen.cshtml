@@ -1,0 +1,48 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>View</title>
+    <style>
+        img {
+            max-height: 256px;
+        }
+
+        input {
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+<img  id="image" /> <br>
+<label> Первая строка </label> <input id="input1" type="text" value="СТАНКИН"/> <br>
+<label> Вторая строка </label> <input id="input2" type="text"  value="Московский государственный"/>   <br>
+<label> Третья строка </label> <input id="input3" type="text" value="технологический университет"/>   <br>
+<script type="text/javascript">
+
+    let s1 = document.getElementById("input1");
+    let s2 = document.getElementById("input2");
+    let s3 = document.getElementById("input3");
+
+    let img = document.getElementById("image"); 
+
+    s1.oninput = updateImage;
+    s2.oninput = updateImage;
+    s3.oninput = updateImage;
+
+    updateImage();
+
+    function updateImage() {
+        img.src = "/Main/getLogo?s1=" + s1.value + "&s2=" + s2.value  + "&s3=" + s3.value ;
+    }
+</script>
+
+
+</body>
+</html>
