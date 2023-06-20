@@ -1137,6 +1137,29 @@ namespace scoi.Models
             return img_ret;
 
         }
+
+        public static Bitmap Hough(Bitmap input)
+        {
+            int width = input.Width;
+            int height = input.Height;
+
+            var input_bytes = ImageOperations.getImgBytes(input);
+
+            var accumulate = new int[512 * 512 * 3];
+
+            for (int i=0; i< accumulate.Count(); ++i)
+            {
+                int b = input_bytes.Count() / i ;
+                int k = i/3 - b*512;
+                int c = i % 3;
+            }
+
+            Bitmap img_ret = new Bitmap(width, height, PixelFormat.Format24bppRgb);
+            img_ret.SetResolution(input.HorizontalResolution, input.VerticalResolution);
+            //writeImageBytes(img_ret, bytes);
+            return img_ret;
+
+        }
         public static byte[] getImgBytes(Bitmap img, int bytes_per_pixel = 3)
         {
             byte[] bytes = new byte[img.Width * img.Height * bytes_per_pixel];  //выделяем память под массив байтов
